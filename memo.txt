@@ -1,0 +1,12 @@
+【ドキュメント類】
+https://docs.arduino.cc/language-reference/en/functions/wifi/server/
+https://docs.arduino.cc/language-reference/en/functions/wifi/client/
+https://docs.arduino.cc/tutorials/uno-r4-wifi/rtc/
+
+https://github.com/renesas/fsp/blob/master/ra/fsp/inc/api/r_rtc_api.h
+
+
+【RTC】
+24.リアルタイムクロック（RTC）　24.1概要
+『カレンダカウントモードでは、RTCは2000年から2099年まで100年間のカレンダを保持し、うるう年の日付を自動補正します』
+　何も設定せず読むと 2000/1/1　0:0:0 になるでOK
