@@ -11,7 +11,7 @@
 
 /* プロトタイプ宣言 PlatformIO では必要 */
 void blinkLED(int);
-void sendHTML(WiFiClient, const char*);
+void sendHTML(WiFiClient, String);
 void send404(WiFiClient);
 void printWiFiStatus(void);
 
@@ -77,21 +77,63 @@ void loop() {
         if (c == '\n') break;
       }
     }
-
+    Serial.println("レスポンス取得：request: " + request);
 
     if (request.indexOf("GET / ") != -1) {
       sendHTML(client, HTML_HOME);  // ホームページ
       printRTCtime();
     }
-    else if (request.indexOf("GET /led") != -1) {
-      if (request.indexOf("count=") != -1) {
+    else if (request.indexOf("GET /led") != -1) { //暗証番号ページ
+      if (request.indexOf("count=") != -1) { // getがあれば
         int start = request.indexOf("count=") + 6;
         int end = request.indexOf(" ", start);
         blinkCount = request.substring(start, end).toInt();
         Serial.println("設定された点滅回数: " + String(blinkCount));
         blinkLED(blinkCount);
       }
-      sendHTML(client, HTML_LED);  // LED設定ページ
+      sendHTML(client, HTML_LED);  // LED設定ページ表示
+    }
+    else if (request.indexOf("GET /calendar") != -1) { //カレンダーページ
+      String html_calendar = HTML_CALENDAR;
+
+      if (request.indexOf("date=") != -1) { // getがあれば
+
+        int start = request.indexOf("date=") + 5;
+        String dateStr = request.substring(start, start + 10);
+        Serial.println("getされた日付: " + dateStr);
+
+        int yyyy, mm, dd;
+        //フォーマットチェック
+        if (sscanf(dateStr.c_str(), "%4d-%2d-%2d", &yyyy, &mm, &dd) != 3) {
+          Serial.println("Invalid date format");
+        } else {
+          //値チェック
+          if(yyyy < 2025 || yyyy > 2090 || mm < 1 || mm > 12 || dd < 1 || dd > 31){
+            Serial.println("Invalid date");
+          }else{
+            //RTC更新
+            RTCTime newTime;
+            RTC.getTime(newTime); //更新しない部分現状維持
+            newTime.setYear(yyyy);
+            newTime.setMonthOfYear((Month)(mm - 1));//0始まりのenumになっているので1引くこと
+            newTime.setDayOfMonth(dd);
+            RTC.setTime(newTime);
+            Serial.println("RTCの日付を設定しました");
+            printRTCtime();
+          }
+        }
+      }
+
+      //rtcの時刻を取得して表示
+      RTCTime currentTime;
+      RTC.getTime(currentTime);
+
+      //プレースホルダを置き換え
+      html_calendar.replace("%RTC_Y%", String(currentTime.getYear()));
+      html_calendar.replace("%RTC_M%", String(Month2int(currentTime.getMonth())));
+      html_calendar.replace("%RTC_D%", String(currentTime.getDayOfMonth()));
+
+      sendHTML(client, html_calendar);  // カレンダー設定ページ表示
     }
     else {
       //send404(client);  // 存在しないページ
@@ -113,7 +155,7 @@ void blinkLED(int count) {
 }
 
 // HTMLページを送信する関数
-void sendHTML(WiFiClient client, const char* page) {
+void sendHTML(WiFiClient client, String page) {
   client.println("HTTP/1.1 200 OK");
   client.println("Content-Type: text/html");
   client.println("Connection: close");
@@ -188,6 +230,13 @@ void setupRTC(void){
 
   RTCTime rtcTime;
   RTC.getTime(rtcTime);// RTCから現在時刻を取得
+
+  //もし2000年(リセット)されていたら、必ず有効期限切れになるように未来を設定
+  //2000年のままだと有効期限が全部OKになってしまうため
+  if(rtcTime.getYear() == 2000){
+    rtcTime.setYear(2090);
+  }
+
 
   RTC.setTimeIfNotRunning(rtcTime); // 現在時刻を引き継いでRTCをスタート
 
