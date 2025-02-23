@@ -9,6 +9,8 @@
 
 #include "ATP301x_Arduino_SPI.h"
 
+#define executeReset() digitalWrite(D7, HIGH)
+
 // #include <WiFiServer.h> //WiFiS3.h → WiFi.h → WiFiServer.h でインクルードされる
 
 //要調査：wifi起動したら音声合成使用禁止　フリーズする　リソース競合？
@@ -47,6 +49,9 @@ char atpbuf[ATP_MAX_LEN];
 void setup() {
 
   pinMode(D2, INPUT);//モード選択
+
+  pinMode(D7, OUTPUT);//リセット端子駆動
+  digitalWrite(D7, LOW);//リセット端子駆動
 
   Serial.begin(9600);
 
@@ -108,6 +113,8 @@ void setup() {
 
 void loop() {
   WiFiClient client = server.available();  // クライアントの接続待機
+
+  bool executeReset = false;
 
   if (client) {
     Serial.println("クライアント接続");
@@ -192,8 +199,10 @@ void loop() {
 
       sendHTML(client, html_calendar);  // カレンダー設定ページ表示
 
-    }
-    else {
+    }else if (request.indexOf("GET /endsetting") != -1) { //設定終了ページ
+      executeReset = true;
+      sendHTML(client, HTML_ENDSETTING);  // 設定終了ページを表示
+    }else {
       //send404(client);  // 存在しないページ
       sendHTML(client, HTML_HOME);  // ホームページを表示
     }
@@ -201,7 +210,14 @@ void loop() {
     client.stop();
   }
 
-}
+  if(executeReset){
+    //設定終了
+    Serial.println("設定終了");
+    executeReset();
+    while(1);
+  }
+
+} //loop終わり
 
 // LEDを指定回数点滅させる関数
 void blinkLED(int count) {

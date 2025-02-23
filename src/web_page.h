@@ -15,14 +15,35 @@ const char HTML_HOME[] PROGMEM = R"rawliteral(
     </head>
     <body>
       <h1>設定メニュー</h1>
-      <ul>
+      <ul style='font-size: 1.5em;'>
         <li><a href='/led'>LEDの設定</a></li>
         <li><a href='/calendar'>日付の設定</a></li>
+        <li><a href='/endsetting'>設定を終了し再起動</a></li>
       </ul>
     </body>
     </html>
     )rawliteral";
     
+
+    // 設定終了ページ
+    const char HTML_ENDSETTING[] PROGMEM = R"rawliteral(
+      <!DOCTYPE html>
+      <html>
+      <meta lang='ja'>
+      <head>
+        <meta charset='utf-8'>
+        <meta name='viewport' content='width=device-width, initial-scale=1'>
+        <title>設定完了</title>
+      </head>
+      <body>
+        <h1>設定完了</h1>
+        本体を再起動します。<br>
+        ブラウザを閉じて終了してください。<br>
+
+      </body>
+      </html>
+      )rawliteral";
+
     // LED設定ページ
     const char HTML_LED[] PROGMEM = R"rawliteral(
     <!DOCTYPE html>
