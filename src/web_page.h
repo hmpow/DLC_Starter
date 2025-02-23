@@ -16,7 +16,7 @@ const char HTML_HOME[] PROGMEM = R"rawliteral(
     <body>
       <h1>設定メニュー</h1>
       <ul style='font-size: 1.5em;'>
-        <li><a href='/led'>LEDの設定</a></li>
+        <li><a href='/led'>マイナ免許 暗証番号登録</a></li>
         <li><a href='/calendar'>日付の設定</a></li>
         <li><a href='/endsetting'>設定を終了し再起動</a></li>
       </ul>
@@ -44,33 +44,46 @@ const char HTML_HOME[] PROGMEM = R"rawliteral(
       </html>
       )rawliteral";
 
-    // LED設定ページ
+    // 暗証番号設定ページ
     const char HTML_LED[] PROGMEM = R"rawliteral(
     <!DOCTYPE html>
-    <html>
+    <html style='max-width: 480px; margin:auto;'>
     <meta lang='ja'>
     <head>
       <meta charset='utf-8'>
       <meta name='viewport' content='width=device-width, initial-scale=1'>
-      <title>LED設定</title>
+      <title>マイナ免許 暗証番号登録</title>
     </head>
     <body>
-      <h1>LED点滅設定</h1>
+      <h1>マイナ免許 暗証番号登録</h1>
       <form action='/led' method='get'>
-        点滅回数: <input type='number' name='count' min='1' max='20'><br>
         <p>%MESSAGE%</p>
-        <h3>暗証番号設定</h3>
-        ※暗証番号未設定のカードは登録せず利用可能です<br>
-        ドライバー1: <input type='number' name='drv1' min='0' max='9999'><br>
-        ドライバー2: <input type='number' name='drv2' min='0' max='9999'><br>
-        ドライバー3: <input type='number' name='drv3' min='0' max='9999'><br>
+        <b>下記は事前登録不要で使用できます。<br><br>
+        ・従来型免許<br>
+        ・暗証番号未設定で発行したマイナ免許</b><br><br>
+        <span style = 'font-size: 0.8em;'>
+        詳細は「運転免許証及び運転免許証作成システム等仕様書 バージョン10」をご覧ください。<br>
+        「免許証 仕様書」でネット検索するとヒットします。<br>
+        </span>
+        
+          <h3>設定対象ドライバー</h3>
+
+        <select name="driver" style = 'font-size: 1.2em;'>
+          <option value = '1'>ドライバー 1</option>
+          <option value = '2'>ドライバー 2</option>
+          <option value = '3'>ドライバー 3</option>
+        </select>
+      
+        <h3>マイナ免許証暗証番号</h3>
+        <input type='number' name='dlcpin' min='0' max='9999' style = 'font-size: 1.5em;'><br>
+          ※空白のまま送信すると削除できます。
+        <h3>いたずら防止用暗証番号</h3>
+        <input type='number' name='secno' min='0' max='9999' style = 'font-size: 1.5em;'><br>
+        ※arduino_secrets.h に設定した "SECURITY_NO" です。
         <br>
-        いたずら防止用暗証番号：<input type='number' name='secno' min='0' max='9999'><br>
-        arduino_secrets.h に設定した SECURITY_NO を入力します。<br>
+        <br>
         <input type='submit' value='設定' style='font-size: 1.5em; padding:0.5em; width:100%; max-width:20em;'>
       </form>
-      ※セキュリティ上、登録されている暗証番号はワイヤレスでは表示していません。<br>
-      ArduinoをPCにUSB接続し、シリアルモニタを表示しながら本ページを開くと出力されます。<br>
       <br>
       <a href='/'>← ホームへ戻る</a>
     </body>
