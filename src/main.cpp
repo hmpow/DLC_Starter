@@ -145,14 +145,25 @@ void loop() {
         String dateStr = request.substring(start, start + 10);
         Serial.println("getされた日付: " + dateStr);
 
-        int yyyy, mm, dd;
+        start = request.indexOf("time=") + 5;
+        String timeStr = request.substring(start, start + 17);
+        Serial.println("getされた時刻: " + timeStr);
+        //%3A をsscanfに入れると可読性皆無になるので置き換える
+        timeStr.replace("%3A", "-");
+        Serial.println("getされた時刻 書式変換: " + timeStr);
+
+        int yyyy, mm, dd , hh, mi, ss = 0;
         //フォーマットチェック
         if (sscanf(dateStr.c_str(), "%4d-%2d-%2d", &yyyy, &mm, &dd) != 3) {
-          Serial.println("Invalid date format");
-        } else {
+          Serial.println("日付：書式が不正");
+        } else if(sscanf(timeStr.c_str(), "%2d-%2d-%2d", &hh, &mi, &ss) != 3) {
+          Serial.println("時刻：書式が不正");
+        }else {
           //値チェック
           if(yyyy < 2025 || yyyy > 2090 || mm < 1 || mm > 12 || dd < 1 || dd > 31){
-            Serial.println("Invalid date");
+            Serial.println("日付：範囲外データ");
+          }else if(hh < 0 || 24 < hh || mi < 0 || 60 < mi || ss < 0 || 60 < ss){
+            Serial.println("時刻：範囲外データ");
           }else{
             //RTC更新
             RTCTime newTime;
@@ -160,6 +171,9 @@ void loop() {
             newTime.setYear(yyyy);
             newTime.setMonthOfYear((Month)(mm - 1));//0始まりのenumになっているので1引くこと
             newTime.setDayOfMonth(dd);
+            newTime.setHour(hh);
+            newTime.setMinute(mi);
+            newTime.setSecond(ss);
             RTC.setTime(newTime);
             Serial.println("RTCの日付を設定しました");
             printRTCtime();
