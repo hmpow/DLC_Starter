@@ -25,6 +25,12 @@ void printWiFiStatus(void);
 void printRTCtime(void);
 void setupRTC(void);
 
+void main_settingMode_setup(void);
+void main_settingMode_loop(void);
+
+void main_normalMode_setup(void);
+void main_normalMode_loop(void);
+
 
 /* 設定 */
 
@@ -37,6 +43,11 @@ WiFiServer server(80);  // Webサーバーのポート
 const int ledPin = LED_BUILTIN;  // 内蔵LEDのピン
 int blinkCount = 0;  // LEDの点滅回数
 
+//起動モード　増やすかもしれないため enum + switch~case にしておく
+enum BOOT_MODE{
+  NORMAL = 0,
+  SETTING
+} bootMode;
 
 /******************/
 /* 音声合成LSI関係 */
@@ -48,10 +59,16 @@ char atpbuf[ATP_MAX_LEN];
 /* メイン関数 */
 void setup() {
 
-  pinMode(D2, INPUT);//モード選択
+  /*************/
+  /* モード共通 */
+  /*************/
+
+  pinMode(D2, INPUT);//起動モード選択
 
   pinMode(D7, OUTPUT);//リセット端子駆動
   digitalWrite(D7, LOW);//リセット端子駆動
+
+  pinMode(ledPin, OUTPUT);
 
   Serial.begin(9600);
 
@@ -61,9 +78,148 @@ void setup() {
 
   delay(10000); //Platform IO がアップロードタスクからシリアルモニタタスクに戻るのを待つ
 
-  //通常起動モードか設定モード化を切り替え
+  /*************/
+  /* モード切替 */
+  /*************/
 
+  //起動モード判定
   if(digitalRead(D2) == HIGH){
+    bootMode = SETTING;
+  }else{
+    bootMode = NORMAL;
+  }
+
+  //起動モードに応じて処理切替
+  switch (bootMode)
+  {
+    case NORMAL:
+      main_normalMode_setup();
+      break;
+    case SETTING:
+      main_settingMode_setup();
+      break;
+    default:
+      break;
+  }
+}
+
+void loop() {
+  //起動モードに応じて処理切替
+  switch (bootMode)
+  {
+    case NORMAL:
+      main_normalMode_loop();
+      break;
+    case SETTING:
+      main_settingMode_loop();
+      break;
+    default:
+      break;
+  }
+}
+
+// LEDを指定回数点滅させる関数
+void blinkLED(int count) {
+  for (int i = 0; i < count; i++) {
+    digitalWrite(ledPin, HIGH);
+    delay(500);
+    digitalWrite(ledPin, LOW);
+    delay(500);
+  }
+}
+
+// HTMLページを送信する関数
+void sendHTML(WiFiClient client, String page) {
+  client.println("HTTP/1.1 200 OK");
+  client.println("Content-Type: text/html");
+  client.println("Connection: close");
+  client.println();
+  client.println(page);
+}
+
+void send404(WiFiClient client) {
+  client.println("HTTP/1.1 404 Not Found");
+  client.println("Content-Type: text/html");
+  client.println("Connection: close");
+  client.println();
+  client.println("<h1>404 Not Found</h1>");
+}
+
+void printWiFiStatus() {
+  // print the SSID of the network you're attached to:
+  Serial.print("SSID: ");
+  Serial.println(WiFi.SSID());
+
+  // print your WiFi shield's IP address:
+  IPAddress ip = WiFi.localIP();
+  Serial.print("IP Address: ");
+  Serial.println(ip);
+
+  // print where to go in a browser:
+  Serial.print("To see this page in action, open a browser to http://");
+  Serial.println(ip);
+
+}
+
+
+void printRTCtime(void){
+  RTCTime currentTime;
+  bool running = RTC.isRunning();
+
+  if (running) {
+    Serial.println("RTC is running!");
+  }else{
+    Serial.println("RTC is not running!");
+  }
+
+  // Get current time from RTC
+  RTC.getTime(currentTime);
+
+  // Print out UNIX time
+  Serial.print("UNIX time: ");
+  Serial.println(currentTime.getUnixTime());
+
+
+  Serial.print("YYYY/MM/DD - HH/MM/SS:");
+  Serial.print(currentTime.getYear());
+  Serial.print("/");
+  Serial.print(Month2int(currentTime.getMonth()));
+  Serial.print("/");
+  Serial.print(currentTime.getDayOfMonth());
+  Serial.print(" - ");
+  Serial.print(currentTime.getHour());
+  Serial.print(":");
+  Serial.print(currentTime.getMinutes());
+  Serial.print(":");
+  Serial.println(currentTime.getSeconds());
+}
+
+
+void setupRTC(void){
+  //何故かRTCの開始と時刻設定が一体化しているAPI仕様のため
+  //一旦取得して時刻設定という動きをしないと枚リセットごとに時計が初期化されてしまう
+
+  RTC.begin(); // RTCの初期化　これだけではRTC動き始めない
+  printRTCtime(); //表示
+
+  RTCTime rtcTime;
+  RTC.getTime(rtcTime);// RTCから現在時刻を取得
+
+  //もし2000年(リセット)されていたら、必ず有効期限切れになるように未来を設定
+  //2000年のままだと有効期限が全部OKになってしまうため
+  if(rtcTime.getYear() == 2000){
+    rtcTime.setYear(2090);
+  }
+
+
+  RTC.setTimeIfNotRunning(rtcTime); // 現在時刻を引き継いでRTCをスタート
+
+  printRTCtime(); //表示
+}
+
+
+
+void main_settingMode_setup(void){
     //設定モード
     Serial.println("設定モード");
 
@@ -98,20 +254,13 @@ void setup() {
     // サーバー開始
     server.begin();
     Serial.println("Webサーバー開始");
-    pinMode(ledPin, OUTPUT);
 
     delay(1000);
     printWiFiStatus();
-  }else{
-    //通常モード
-      //アナウンス
-      sprintf(atpbuf,"tsu-jo-mo'-dode/kido-shima'_su.");
-      atp301x.talk(atpbuf,true);
-      while(1);
-  }
+    return;
 }
 
-void loop() {
+void main_settingMode_loop(void){
   WiFiClient client = server.available();  // クライアントの接続待機
 
   bool executeReset = false;
@@ -216,104 +365,19 @@ void loop() {
     executeReset();
     while(1);
   }
-
-} //loop終わり
-
-// LEDを指定回数点滅させる関数
-void blinkLED(int count) {
-  for (int i = 0; i < count; i++) {
-    digitalWrite(ledPin, HIGH);
-    delay(500);
-    digitalWrite(ledPin, LOW);
-    delay(500);
-  }
+  return;
 }
 
-// HTMLページを送信する関数
-void sendHTML(WiFiClient client, String page) {
-  client.println("HTTP/1.1 200 OK");
-  client.println("Content-Type: text/html");
-  client.println("Connection: close");
-  client.println();
-  client.println(page);
+void main_normalMode_setup(void){
+  //アナウンス
+  sprintf(atpbuf,"tsu-jo-mo'-dode/kido-shima'_su.");
+  atp301x.talk(atpbuf,true);
+  Serial.println("通常モード");
+
+  return;
 }
 
-void send404(WiFiClient client) {
-  client.println("HTTP/1.1 404 Not Found");
-  client.println("Content-Type: text/html");
-  client.println("Connection: close");
-  client.println();
-  client.println("<h1>404 Not Found</h1>");
-}
-
-void printWiFiStatus() {
-  // print the SSID of the network you're attached to:
-  Serial.print("SSID: ");
-  Serial.println(WiFi.SSID());
-
-  // print your WiFi shield's IP address:
-  IPAddress ip = WiFi.localIP();
-  Serial.print("IP Address: ");
-  Serial.println(ip);
-
-  // print where to go in a browser:
-  Serial.print("To see this page in action, open a browser to http://");
-  Serial.println(ip);
-
-}
-
-
-void printRTCtime(void){
-  RTCTime currentTime;
-  bool running = RTC.isRunning();
-
-  if (running) {
-    Serial.println("RTC is running!");
-  }else{
-    Serial.println("RTC is not running!");
-  }
-
-  // Get current time from RTC
-  RTC.getTime(currentTime);
-
-  // Print out UNIX time
-  Serial.print("UNIX time: ");
-  Serial.println(currentTime.getUnixTime());
-
-
-  Serial.print("YYYY/MM/DD - HH/MM/SS:");
-  Serial.print(currentTime.getYear());
-  Serial.print("/");
-  Serial.print(Month2int(currentTime.getMonth()));
-  Serial.print("/");
-  Serial.print(currentTime.getDayOfMonth());
-  Serial.print(" - ");
-  Serial.print(currentTime.getHour());
-  Serial.print(":");
-  Serial.print(currentTime.getMinutes());
-  Serial.print(":");
-  Serial.println(currentTime.getSeconds());
-}
-
-
-void setupRTC(void){
-  //何故かRTCの開始と時刻設定が一体化しているAPI仕様のため
-  //一旦取得して時刻設定という動きをしないと枚リセットごとに時計が初期化されてしまう
-
-  RTC.begin(); // RTCの初期化　これだけではRTC動き始めない
-  printRTCtime(); //表示
-
-  RTCTime rtcTime;
-  RTC.getTime(rtcTime);// RTCから現在時刻を取得
-
-  //もし2000年(リセット)されていたら、必ず有効期限切れになるように未来を設定
-  //2000年のままだと有効期限が全部OKになってしまうため
-  if(rtcTime.getYear() == 2000){
-    rtcTime.setYear(2090);
-  }
-
-
-  RTC.setTimeIfNotRunning(rtcTime); // 現在時刻を引き継いでRTCをスタート
-
-  printRTCtime(); //表示
+void main_normalMode_loop(void){
+  blinkLED(1);
+  return;
 }
