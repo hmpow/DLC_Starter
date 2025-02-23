@@ -7,7 +7,11 @@
 #include "arduino_secrets.h"
 #include "web_page.h"
 
+#include "ATP301x_Arduino_SPI.h"
+
 // #include <WiFiServer.h> //WiFiS3.h → WiFi.h → WiFiServer.h でインクルードされる
+
+//要調査：wifi起動したら音声合成使用禁止　フリーズする　リソース競合？
 
 /* プロトタイプ宣言 PlatformIO では必要 */
 void blinkLED(int);
@@ -31,41 +35,75 @@ WiFiServer server(80);  // Webサーバーのポート
 const int ledPin = LED_BUILTIN;  // 内蔵LEDのピン
 int blinkCount = 0;  // LEDの点滅回数
 
+
+/******************/
+/* 音声合成LSI関係 */
+/******************/
+
+ATP301x_ARDUINO_SPI atp301x;
+char atpbuf[ATP_MAX_LEN];
+
 /* メイン関数 */
 void setup() {
-  delay(10000); //Platform IO がアップロードタスクからシリアルモニタタスクに戻るのを待つ
+
+  pinMode(D2, INPUT);//モード選択
 
   Serial.begin(9600);
 
+  atp301x.begin();
+
   setupRTC();
 
-  // WiFi モジュール搭載の確認:
-  if (WiFi.status() == WL_NO_MODULE) {
-    Serial.println("Communication with WiFi module failed!");
-    // don't continue
-    while (true);
-  }  
+  delay(10000); //Platform IO がアップロードタスクからシリアルモニタタスクに戻るのを待つ
 
-#ifdef SECRET_IP_ADDR
-  //IPアドレスの設定
-  WiFi.config(IPAddress(SECRET_IP_ADDR));
-#endif
+  //通常起動モードか設定モード化を切り替え
 
-  // アクセスポイントの開始
-  WiFi.beginAP(ssid, password);
-  while (WiFi.status() != WL_AP_LISTENING) {
-    delay(500);
-    Serial.print(".");
+  if(digitalRead(D2) == HIGH){
+    //設定モード
+    Serial.println("設定モード");
+
+    // WiFi モジュール搭載の確認:
+    if (WiFi.status() == WL_NO_MODULE) {
+      Serial.println("Communication with WiFi module failed!");
+      // don't continue
+      while (true);
+    }  
+
+  #ifdef SECRET_IP_ADDR
+    //IPアドレスの設定
+    WiFi.config(IPAddress(SECRET_IP_ADDR));
+  #endif
+
+    //アナウンス
+    sprintf(atpbuf,"sette-mo'-dode/kido-shima'_su.");
+    atp301x.talk(atpbuf,true);
+    sprintf(atpbuf,"kinaimo'-doni/irete'kara waifaiosetsuzo_kushitekudasa'i.");
+    atp301x.talk(atpbuf,true);
+    sprintf(atpbuf,"<ALPHA VAL= SSID >wa <ALPHA VAL= %s >.",ssid);
+    atp301x.talk(atpbuf,true);
+
+    // アクセスポイントの開始
+    WiFi.beginAP(ssid, password);
+    while (WiFi.status() != WL_AP_LISTENING) {
+      delay(500);
+      Serial.print(".");
+    }
+    Serial.println("\nアクセスポイント開始: " + String(ssid));
+
+    // サーバー開始
+    server.begin();
+    Serial.println("Webサーバー開始");
+    pinMode(ledPin, OUTPUT);
+
+    delay(1000);
+    printWiFiStatus();
+  }else{
+    //通常モード
+      //アナウンス
+      sprintf(atpbuf,"tsu-jo-mo'-dode/kido-shima'_su.");
+      atp301x.talk(atpbuf,true);
+      while(1);
   }
-  Serial.println("\nアクセスポイント開始: " + String(ssid));
-
-  // サーバー開始
-  server.begin();
-  Serial.println("Webサーバー開始");
-  pinMode(ledPin, OUTPUT);
-
-  delay(1000);
-  printWiFiStatus();
 }
 
 void loop() {
@@ -139,6 +177,7 @@ void loop() {
       html_calendar.replace("%RTC_D%", String(currentTime.getDayOfMonth()));
 
       sendHTML(client, html_calendar);  // カレンダー設定ページ表示
+
     }
     else {
       //send404(client);  // 存在しないページ
@@ -147,6 +186,7 @@ void loop() {
     
     client.stop();
   }
+
 }
 
 // LEDを指定回数点滅させる関数
