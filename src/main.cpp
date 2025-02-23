@@ -48,7 +48,7 @@ void setup() {
 
 #ifdef SECRET_IP_ADDR
   //IPアドレスの設定
-  WiFi.config(IPAddress(SECURET_IP_ADDR));
+  WiFi.config(IPAddress(SECRET_IP_ADDR));
 #endif
 
   // アクセスポイントの開始
