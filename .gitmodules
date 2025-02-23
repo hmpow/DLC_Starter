@@ -1,0 +1,6 @@
+[submodule "submodule/ATP301x_Arduino_SPI"]
+	path = submodule/ATP301x_Arduino_SPI
+	url = https://github.com/hmpow/ATP301x_Arduino_SPI.git
+[submodule "submodule/RC_S660_S_DriverForMCU"]
+	path = submodule/RC_S660_S_DriverForMCU
+	url = https://github.com/hmpow/RC_S660_S_DriverForMCU.git
