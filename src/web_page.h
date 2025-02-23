@@ -71,17 +71,18 @@ const char HTML_HOME[] PROGMEM = R"rawliteral(
         本体内部のカレンダーを設定します。<br>
           <br>
           <div style= 'text-align: center;'>
-        <b>%RTC_Y% 年 %RTC_M% 月 %RTC_D% 日</b> 
-        <br><br>↓ ↓ ↓<br><br>
+        <span style='font-size: 1.5em;'>%RTC_Y% / %RTC_M% / %RTC_D%<br>
+        ↓ ↓ ↓<br></span>
         <form action='/calendar' method='get'>
       
-          <input type='date' name='date' min='2025-01-01' max='2090-12-31' style = 'font-size: 1.5em;'>
+          <input type='date' name='date' min='2025-01-01' max='2090-12-31' style = 'font-size: 1.5em; text-align: center;'>
           </div>
           <br>
           スマホの日付がデフォルト入力されています。<br>
           未来の日付に設定すると動作テストができます。<br>
           <br>
-          <input type='time' name='time' readonly tabIndex = '-1' style = 'background-color: gainsboro; cursor:not-allowed;'> ※時刻はスマホの時計から自動取得されます。<br>
+          <input type='time' name='time' readonly tabIndex = '-1' style = 'background-color: gainsboro; cursor:not-allowed;'><br>
+          ※時刻はスマホの時計から自動取得されます。<br>
           
           <br>
       
