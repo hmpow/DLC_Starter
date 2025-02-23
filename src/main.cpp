@@ -45,7 +45,12 @@ void setup() {
     // don't continue
     while (true);
   }  
-  
+
+#ifdef SECRET_IP_ADDR
+  //IPアドレスの設定
+  WiFi.config(IPAddress(SECURET_IP_ADDR));
+#endif
+
   // アクセスポイントの開始
   WiFi.beginAP(ssid, password);
   while (WiFi.status() != WL_AP_LISTENING) {
