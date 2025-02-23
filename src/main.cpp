@@ -83,7 +83,7 @@ void setup() {
   /*************/
 
   //起動モード判定
-  if(digitalRead(D2) == HIGH){
+  if(digitalRead(D2) == LOW){
     bootMode = SETTING;
   }else{
     bootMode = NORMAL;
@@ -378,6 +378,7 @@ void main_normalMode_setup(void){
 }
 
 void main_normalMode_loop(void){
-  blinkLED(1);
+  atp301x.chimeK();
+  atp301x.chimeJ();
   return;
 }
