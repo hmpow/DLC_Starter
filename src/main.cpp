@@ -37,6 +37,7 @@ void main_normalMode_loop(void);
 const char* ssid     = SECRET_SSID;  // アクセスポイントのSSID
 const char* password = SECRET_PASS;  // パスワード
 
+
 WiFiServer server(80);  // Webサーバーのポート
 
 
