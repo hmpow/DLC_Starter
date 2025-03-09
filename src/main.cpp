@@ -7,6 +7,8 @@
 #include "arduino_secrets.h"
 #include "web_page.h"
 
+#include "StartCtrl.h"
+
 #include "ATP301x_Arduino_SPI.h"
 
 #define executeReset() digitalWrite(D7, HIGH)
@@ -55,10 +57,19 @@ enum BOOT_MODE{
 /******************/
 
 ATP301x_ARDUINO_SPI atp301x;
+
+/******************/
+/* STARTリレー関係 */
+/******************/
+
+StartCtrl_DigitalOut startCtrl;
+
 char atpbuf[ATP_MAX_LEN];
 
 /* メイン関数 */
 void setup() {
+
+  startCtrl.setup();
 
   /*************/
   /* モード共通 */
@@ -379,7 +390,9 @@ void main_normalMode_setup(void){
 }
 
 void main_normalMode_loop(void){
+  startCtrl.allow();
   atp301x.chimeK();
+  startCtrl.deny();
   atp301x.chimeJ();
   return;
 }
