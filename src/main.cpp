@@ -700,7 +700,7 @@ void announceCurrentTime(){
     atp301x.talk("jiko'_kuse'tte-wa.\r\0");
     //音声合成「＿年＿月＿日」
     sprintf(atpbuf,"<NUMK VAL=%d COUNTER=nenn>/<NUMK VAL=%d COUNTER=gatu>/<NUMK VAL=%d COUNTER=nichi>.\r",
-      (int)currentTime.getYear(), (int)Month2int(currentTime.getMonth()) + 1, (int)currentTime.getDayOfMonth());
+      (int)currentTime.getYear(), (int)Month2int(currentTime.getMonth()), (int)currentTime.getDayOfMonth());
     atp301x.talk(atpbuf);
     //音声合成「＿時＿分です」
     sprintf(atpbuf,"<NUMK VAL=%d COUNTER=ji>/<NUMK VAL=%d COUNTER=funn>/de_su.\r",
