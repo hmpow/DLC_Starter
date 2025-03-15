@@ -188,9 +188,8 @@ std::vector<type_data_byte> JpDrvLicNfcCommandBase::assemblyCommandVerify_checkR
     command.push_back(0x00);   //CLA
     command.push_back(0x20);   //INS
     command.push_back(0x00);   //P1
-    command.push_back(0x00);   //P2
-    
-    type_data_byte p2 = 0x00 | sEfid; //0b00000000 | shortEFid
+  
+    type_data_byte p2 = 0x80 | sEfid; //0b10000000 | shortEFid
     command.push_back(p2);     //P2
 
     return command;
@@ -209,10 +208,11 @@ bool JpDrvLicNfcCommandBase::parseResponseVerify_execute(std::vector<type_data_b
 }
 
 uint8_t JpDrvLicNfcCommandBase::parseResponseVerify_checkRemainingCount(std::vector<type_data_byte> inputVect){
-    if (inputVect.size() != 2){
+
+    if (inputVect.empty() || inputVect.size() != 2){
         return 0;
     }
-    
+
     if(inputVect[0] == STATUS_VERIFY_NG.sw1){
         return inputVect[1] & 0x0F; //下位4bitマスク
     }

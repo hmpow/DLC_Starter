@@ -445,10 +445,6 @@ void main_normalMode_setup(void){
 
 void main_normalMode_loop(void){
   mbed_main();
-  startCtrl.allow();
-  atp301x.chimeK();
-  startCtrl.deny();
-  atp301x.chimeJ();
   return;
 }
 
@@ -585,10 +581,30 @@ void mbed_main() {
   //オーディオ回路スリープ
   //audioOff();
 
+  atp301x.talk("kannsu-te'_suto kai_shi.");
+
+  atp301x.talk("pinnsette-_shuto_kute'_suto.");
+  JPDLC_ISSET_PIN_STATUS pinStatus = jpdlcConventional.issetPin();
+  if(pinStatus == PIN_SET){
+    atp301x.talk("pinnse'tte-/a'ri.");
+  }else if(pinStatus == PIN_NOT_SET){
+    atp301x.talk("pinnse'tte-/na'_shi.");
+  }else{
+    atp301x.talk("pinnsette-kakuninne'ra-.");
+  }
+  atp301x.talk("nokorisho-go-ka'isu-/_shuto_kute'_suto.");
+  uint8_t count = jpdlcConventional.getRemainingCount();
+  sprintf(atpbuf,"nokorisho-go-ka'isu-wa <NUMK VAL=%d COUNTER=ka'i>/de_su.",count);
+  atp301x.talk(atpbuf,true);
+
+  atp301x.talk("kannsu-te'_suto shu-ryo-.");
+
   rcs660sAppIf.releaseNfc();
 
   delay(1000);
-  }//while終わり
+  }  //while終わり
+
+
 }//main終わり
 
 /****************************************************************************/
@@ -705,9 +721,6 @@ void errorBeep(int shotnum){
   return;
 }
 
-/*************/
-/*** 送信系 ***/
-/*************/
 
 /*************/
 /*** 検査系 ***/

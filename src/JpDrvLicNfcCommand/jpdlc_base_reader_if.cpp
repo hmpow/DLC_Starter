@@ -51,3 +51,36 @@ std::vector<type_data_byte> _nfcTransceive(const std::vector<type_data_byte> inp
     return retResponse;
 }
 
+std::vector<type_data_byte> _nfcTransceive_Stub(const std::vector<type_data_byte> inputCommand){
+    printf("\r\n");
+    printf("Stub_nfcTransceive\r\n");
+    printf("\r\n");
+    std::vector<type_data_byte> command;
+    std::vector<type_data_byte> retResponse;
+
+    const uint16_t comLen = inputCommand.size();
+
+    if(comLen > READER_MAX_COMMAND_LEN){
+        //カードリーダーが対応する最大長を超えている
+        return retResponse; //空のvector
+    }
+
+    for(uint16_t i = 0; i < comLen; i++){
+        command.push_back( (type_data_byte)inputCommand[i] );
+    }
+
+#ifdef DLC_LAYER_DEBUG
+    printf("Stub_Tx To Card : ");
+    for(const auto& comByte : command){
+        printf("%02X ",comByte);
+    }
+    printf("\r\n");
+#endif
+
+printf("\r\n");
+printf("Stub_nfcTransceive Return Empty Vetor\r\n");
+printf("\r\n");
+
+    return retResponse;
+}
+

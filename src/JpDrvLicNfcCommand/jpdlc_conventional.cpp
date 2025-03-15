@@ -189,7 +189,7 @@ uint8_t JpDrvLicNfcCommandConventional::getRemainingCount(void){
         )
     );
     if(card_status == JPDLC_STATUS_ERROR){
-        return PIN_ERROR;
+        return 0;
     }
 
     //pinが入っているEFを短縮EF指定してボディーなしのVerify
@@ -197,7 +197,7 @@ uint8_t JpDrvLicNfcCommandConventional::getRemainingCount(void){
 
     remainingCount = parseResponseVerify_checkRemainingCount(
         _nfcTransceive(
-            assemblyCommandVerify_checkRemainingCount(FULL_FEID_MF_EF02_PINSETTING)
+            assemblyCommandVerify_checkRemainingCount(FULL_FEID_MF_IEF01_PIN1)
         )
     );
 
@@ -222,7 +222,7 @@ bool JpDrvLicNfcCommandConventional::executeVerify(type_PIN pin){
     bool retVal = false;
 
     retVal = parseResponseVerify_execute(
-        _nfcTransceive(
+        _nfcTransceive_Stub(
             assemblyCommandVerify_execute(FULL_FEID_MF_EF02_PINSETTING, pin)
         )
     );

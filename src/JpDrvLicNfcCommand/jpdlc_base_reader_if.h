@@ -14,4 +14,7 @@
 void setReaderInstance(Rcs660sAppIf *);
 std::vector<type_data_byte> _nfcTransceive(const std::vector<type_data_byte> );
 
+std::vector<type_data_byte> _nfcTransceive_Stub(const std::vector<type_data_byte> );
+
+
 #endif // JP_DRV_LIC_NFC_COMMAND_READER_IF_H
