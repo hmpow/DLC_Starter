@@ -483,6 +483,7 @@ void mbed_main() {
   //audioOn();
   
   bool canDrive = false;
+  bool readError = false;
   char atpbuf[ATP_MAX_LEN];
   
   //uint8_t* resArray = new uint8_t[rcs620.RETURN_ENVELOPE_SIZE];
@@ -506,8 +507,15 @@ void mbed_main() {
       ig_start_sw.fall(callback(&beep, &PwmBeep::turnOff));
 #endif
 
-      //音声合成「免許証をタッチしてください」
-      announcePleaseTouch();
+      if(readError){
+        //音声合成「読み取りエラー　もう一度タッチしてください」
+        announcePleaseRetry();
+        readError = false;
+      }else{
+        //音声合成「免許証をタッチしてください」
+        announcePleaseTouch();
+      }
+
   
      //NFC Type-Bをポーリング
      rcs660sAppIf.setNfcType(NFC_TYPE_B);
@@ -532,6 +540,7 @@ void mbed_main() {
     //免許証判定STEP2 3つのAIDが存在するかチェック
 
     if(!jpdlcConventional.isDrvLicCard()){
+      readError = true;
       continue;
     }
     /*後でマイナ免許証判定を入れる*/
@@ -541,8 +550,7 @@ void mbed_main() {
 
     JPDLC_EXPIRATION_DATA expirarionData = jpdlcConventional.getExpirationData();
     if(expirarionData.yyyy == 0){
-      //読み取りエラー
-      announcePleaseRetry();
+      readError = true;
       continue;
     }
 
