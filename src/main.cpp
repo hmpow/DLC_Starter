@@ -1,4 +1,4 @@
-//ChatGPTの提案とArduinoのサンプルプログラムを合体してベースを作成
+//ToDo：割り込み連打するとUART受信フリーズ（時間経過で復活）
 
 #define TEST_WAIT_HUMAN_READABLE_INTERVAL_MS 25
 
@@ -22,6 +22,7 @@
 #include "jpdlc_conventional.h"
 
 #define RESET_OUT_PIN D7
+#define ENGINE_START_MONITOR_PIN D3
 #define BOOT_MODE_PIN D2
 
 #define executeReset() digitalWrite(RESET_OUT_PIN, HIGH)
@@ -30,6 +31,7 @@ void mbed_main();
 
 volatile uint8_t driverNum;
 volatile unsigned long lastIntruuptTime;
+volatile unsigned long lastIntruuptTimeEg;
 
 
 /****************************************************************************/
@@ -41,6 +43,7 @@ volatile unsigned long lastIntruuptTime;
 //制御系
 
 void intrruptFunc_ChangeDriver(void);
+void intrruptFunc_EgStartMoni(void);
 void allowDrive();
 void disallowDrive();
 void reset();
@@ -439,8 +442,10 @@ void main_settingMode_loop(void){
 
 void main_normalMode_setup(void){
 
+  pinMode(ENGINE_START_MONITOR_PIN, INPUT);//エンジンスタートSW監視
   driverNum = 1;
   lastIntruuptTime = 0;
+  lastIntruuptTimeEg = 0;
   
   rcs660sAppIf.begin();
 
@@ -504,6 +509,7 @@ void mbed_main() {
       // beep.setFreq(BEEP_FREQ);
       reset();
       attachInterrupt(digitalPinToInterrupt(BOOT_MODE_PIN), intrruptFunc_ChangeDriver, FALLING );
+      attachInterrupt(digitalPinToInterrupt(ENGINE_START_MONITOR_PIN), intrruptFunc_EgStartMoni, FALLING );
 
 
 #if 0
@@ -533,8 +539,8 @@ void mbed_main() {
 
      /* noInterrupts() 使うとUART受信割り込みまで止まってしまいNG */
 
-     detachInterrupt(digitalPinToInterrupt(BOOT_MODE_PIN)); //単品割り込み設定
-
+    detachInterrupt(digitalPinToInterrupt(BOOT_MODE_PIN)); //単品割り込み設定
+    detachInterrupt(digitalPinToInterrupt(ENGINE_START_MONITOR_PIN)); //単品割り込み設定
 
      /* 捕捉できるまでcatchNfcを抜けてこない */
 
@@ -836,15 +842,37 @@ void intrruptFunc_ChangeDriver(){
   //DJごっこして遊んでいるとUARTがしばらくフリーズする
   unsigned long lastlast = lastIntruuptTime;
   lastIntruuptTime = millis();
-  if(lastIntruuptTime - lastlast < 300){
+  if((lastIntruuptTime - lastlast) < 500){
     return;
   }
+
+  /*チャタリングではない*/
+
   driverNum++;
   if(driverNum > 3){
     driverNum = 1;
   }
-
-  sprintf(atpbuf,"ma'ina<ALPHA VAL=%d>.",driverNum);
+  if((lastIntruuptTime - lastlast) < 1500){
+    sprintf(atpbuf,"<ALPHA VAL=%d>.",driverNum);
+    atp301x.talk(atpbuf,false);
+    return;
+  }
+  /*連打ではない*/
+  sprintf(atpbuf,"mainame'nnkyo dora'iba-<ALPHA VAL=%d>.",driverNum);
   atp301x.talk(atpbuf,false);
-  
+  return;
+ 
+}
+
+void intrruptFunc_EgStartMoni(){
+  //DJごっこして遊んでいるとUARTがしばらくフリーズする
+  unsigned long lastEg = lastIntruuptTimeEg;
+  lastIntruuptTimeEg = millis();
+  if((lastIntruuptTimeEg - lastEg) < 500){
+    return;
+  }else{
+    announcePleaseTouch();
+  }
+  return;
+ 
 }

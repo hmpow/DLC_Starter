@@ -2,7 +2,7 @@
 #define STARTCTRL_H
 
 // デジタル出力の場合の設定
-#define START_CTRL_PIN D3
+#define START_CTRL_PIN D5
 #define ALLOW_LOGIC HIGH
 #define DENY_LOGIC  LOW
 
