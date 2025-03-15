@@ -1,6 +1,6 @@
 //ChatGPTの提案とArduinoのサンプルプログラムを合体してベースを作成
 
-#define TEST_WAIT_HUMAN_READABLE_INTERVAL_MS 50
+#define TEST_WAIT_HUMAN_READABLE_INTERVAL_MS 25
 
 
 #define USE_ATP301X true
@@ -21,10 +21,16 @@
 #include "ATP301x_Arduino_SPI.h"
 #include "jpdlc_conventional.h"
 
+#define RESET_OUT_PIN D7
+#define BOOT_MODE_PIN D2
 
-#define executeReset() digitalWrite(D7, HIGH)
+#define executeReset() digitalWrite(RESET_OUT_PIN, HIGH)
 
 void mbed_main();
+
+volatile uint8_t driverNum;
+volatile unsigned long lastIntruuptTime;
+
 
 /****************************************************************************/
 
@@ -33,6 +39,8 @@ void mbed_main();
 /******************/
 
 //制御系
+
+void intrruptFunc_ChangeDriver(void);
 void allowDrive();
 void disallowDrive();
 void reset();
@@ -124,10 +132,10 @@ void setup() {
 
   startCtrl.setup(); //どちらのモードでも禁止側に初期化必要
 
-  pinMode(D2, INPUT);//起動モード選択
+  pinMode(BOOT_MODE_PIN, INPUT);//起動モード選択
 
-  pinMode(D7, OUTPUT);//リセット端子駆動
-  digitalWrite(D7, LOW);//リセット端子駆動
+  pinMode(RESET_OUT_PIN, OUTPUT);//リセット端子駆動
+  digitalWrite(RESET_OUT_PIN, LOW);//リセット端子駆動
 
   pinMode(ledPin, OUTPUT);
 
@@ -144,7 +152,7 @@ void setup() {
   /*************/
 
   //起動モード判定
-  if(digitalRead(D2) == LOW){
+  if(digitalRead(BOOT_MODE_PIN) == LOW){
     bootMode = SETTING;
   }else{
     bootMode = NORMAL;
@@ -430,6 +438,9 @@ void main_settingMode_loop(void){
 }
 
 void main_normalMode_setup(void){
+
+  driverNum = 1;
+  lastIntruuptTime = 0;
   
   rcs660sAppIf.begin();
 
@@ -492,6 +503,8 @@ void mbed_main() {
   while(!canDrive){
       // beep.setFreq(BEEP_FREQ);
       reset();
+      attachInterrupt(digitalPinToInterrupt(BOOT_MODE_PIN), intrruptFunc_ChangeDriver, FALLING );
+
 
 #if 0
       //マイコン起動より早くキーひねると割り込みかからないから初回手動でブザー鳴らす
@@ -517,6 +530,11 @@ void mbed_main() {
      rcs660sAppIf.setNfcType(NFC_TYPE_B);
      rcs660sAppIf.updateTxAndRxFlag({false, false, 3, false});
      bool isCatch = rcs660sAppIf.catchNfc(RETRY_CATCH_INFINITE);
+
+     /* noInterrupts() 使うとUART受信割り込みまで止まってしまいNG */
+
+     detachInterrupt(digitalPinToInterrupt(BOOT_MODE_PIN)); //単品割り込み設定
+
 
      /* 捕捉できるまでcatchNfcを抜けてこない */
 
@@ -811,4 +829,22 @@ bool isEfectiveLicenseCard(JPDLC_EXPIRATION_DATA exData){
       }
       return false;
   }
+}
+
+
+void intrruptFunc_ChangeDriver(){
+  //DJごっこして遊んでいるとUARTがしばらくフリーズする
+  unsigned long lastlast = lastIntruuptTime;
+  lastIntruuptTime = millis();
+  if(lastIntruuptTime - lastlast < 300){
+    return;
+  }
+  driverNum++;
+  if(driverNum > 3){
+    driverNum = 1;
+  }
+
+  sprintf(atpbuf,"ma'ina<ALPHA VAL=%d>.",driverNum);
+  atp301x.talk(atpbuf,false);
+  
 }
