@@ -220,7 +220,7 @@ bool JpDrvLicNfcCommandConventional::executeVerify(type_PIN pin){
 
     retVal = parseResponseVerify_execute(
         _nfcTransceive_Stub(
-            assemblyCommandVerify_execute(FULL_FEID_MF_EF02_PINSETTING, pin)
+            assemblyCommandVerify_execute(FULL_FEID_MF_IEF01_PIN1, pin)
         )
     );
 
