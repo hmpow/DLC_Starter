@@ -2,17 +2,24 @@
 
 #define executeReset() digitalWrite(RESET_OUT_PIN, HIGH)
 
-
 const char* ssid     = SECRET_SSID;  // アクセスポイントのSSID
 const char* password = SECRET_PASS;  // パスワード
 
-
 WiFiServer server(80);  // Webサーバーのポート
 
+ArduinoLEDMatrix matrix;
+
+const uint32_t matrix_WiFi[] = {
+	0x6019820,
+	0x44f29092,
+	0x640f0060
+};
 
 void main_settingMode_setup(void){
     //設定モード
     Serial.println("設定モード");
+
+    matrix.begin();
 
     // WiFi モジュール搭載の確認:
     if (WiFi.status() == WL_NO_MODULE) {
@@ -21,6 +28,8 @@ void main_settingMode_setup(void){
         delay(1000);
       }
     }  
+
+    matrix.loadFrame(matrix_WiFi);
 
 #ifdef SECRET_IP_ADDR
     //IPアドレスの設定
@@ -53,6 +62,9 @@ void main_settingMode_loop(void){
   bool executeReset = false;
 
   if (client) {
+
+    //クライアントからリクエストを受信
+
     Serial.println("クライアント接続");
     String request = "";
     
@@ -65,16 +77,118 @@ void main_settingMode_loop(void){
     }
     Serial.println("レスポンス取得：request: " + request);
 
+    //リクエストに応じた処理
+
     if (request.indexOf("GET / ") != -1) {
       sendHTML(client, HTML_HOME);  // ホームページ
       printRTCtime();
     }
     else if (request.indexOf("GET /pinsetting") != -1) { //暗証番号ページ
-      if (request.indexOf("count=") != -1) { // getがあれば
-        int start = request.indexOf("count=") + 6;
-        int end = request.indexOf(" ", start);
-      }
-      sendHTML(client, HTML_PIN_SETTING);  // 暗証番号設定ページ表示
+
+        String html_pinsetting = HTML_PIN_SETTING;
+
+        //いたずら防止判定
+        uint16_t inputNo = 10000; // "0000" はありるので範囲外に初期化
+        if (request.indexOf("secno=") != -1) { // getがあれば
+            int start = request.indexOf("secno=") + 6;
+            int end = request.indexOf(" ", start);
+            printf("SeqNo start: %d, end: %d\n", start, end);
+            String secNumStr = request.substring(start, end);
+            Serial.println("getされたsecNo_Str: " + secNumStr);
+            inputNo = (uint16_t)secNumStr.toInt();
+            printf("getされたsecNo_Int: %d\n" , inputNo);
+
+            bool isVerifyOk = verifySecurityNo(inputNo);
+
+            if(!isVerifyOk){
+                //暗証番号が不一致
+                Serial.println("いたずら防止暗証番号間違い");
+                html_pinsetting.replace("%MESSAGE%", "いたずら防止暗証番号が違います");
+            }else{
+                //暗証番号が一致
+                Serial.println("いたずら防止暗証番号一致");
+
+                uint8_t drvNum = 0;
+
+                //ドライバー番号の処理
+                if (request.indexOf("driver=") != -1) { // getがあれば
+                    int start = request.indexOf("driver=") + 7;
+                    int end = request.indexOf("&dlcpin", start);
+
+                    printf("ドライバー start: %d, end: %d\n", start, end);
+
+                    String drvNumStr = request.substring(start, end); 
+
+                    //String drvNumStr = request.substring(start, start + 1); 
+                    //固定長で良い→良くない　アドレスバーで200とか入れるテストしたら 2 になった
+                    //文字とか入った際はtoIntでゼロにしてくれるのでOK　ドライバーを 1 始まりにすることがポイント
+                    //マイナス入ったら→符号ビットがunsignedへのキャストされ範囲外の巨大数になるのでOK
+                    Serial.println("getされたdrvNum_str: " + drvNumStr);
+                    drvNum = (uint8_t)drvNumStr.toInt();
+
+                    printf("getされたdrvNum_Int: %d\n" , drvNum);
+
+                    if(0 < drvNum && drvNum <= DRIVER_LIST_NUM){
+                        //ドライバー番号照合OK
+                        Serial.println("ドライバー番号が正常");
+
+                        type_EEPROM_PIN dcPin = pinEEPROM.getPin(drvNum - 1);
+                        printf("EEPROMから取得したPIN: %d %d %d %d\n" , dcPin[0], dcPin[1], dcPin[2], dcPin[3]);
+
+                        //PINの処理
+                        if (request.indexOf("dlcpin=") != -1) { // getがあれば
+                            int start = request.indexOf("dlcpin=") + 7;
+                            int end = request.indexOf("&secno", start);
+
+                            printf("マイナPIN start: %d, end: %d\n", start, end);
+
+                            if(start == end){
+                                //PINが空白
+                                Serial.println("PINが空白");
+                                pinEEPROM.clearPin(drvNum - 1);
+                                pinEEPROM.debugPrintEEPROM(24);
+                                html_pinsetting.replace("%MESSAGE%", "ドライバー" +  String(drvNum) + "PINを削除します");
+                                
+                            }else{
+                                //PINがある
+                                String dlcPinStr = request.substring(start, end);
+                                Serial.println("getされたdlcPin_str: " + dlcPinStr);
+                                uint16_t dlcPinInt = (uint16_t)dlcPinStr.toInt();
+                                
+                                if(dlcPinInt < 10000){
+                                    //PINが範囲内
+                                    type_EEPROM_PIN dlcPin = {0,0,0,0};
+                                    dlcPin[0] = (uint8_t)(dlcPinInt / 1000);
+                                    dlcPin[1] = (uint8_t)((dlcPinInt % 1000) / 100);
+                                    dlcPin[2] = (uint8_t)((dlcPinInt % 100) / 10);
+                                    dlcPin[3] = (uint8_t)(dlcPinInt % 10);
+                                    printf("getされたdlcPin_Int: %d %d %d %d\n" , dlcPin[0], dlcPin[1], dlcPin[2], dlcPin[3]);
+                                    pinEEPROM.updatePin(drvNum - 1, dlcPin);
+                                    pinEEPROM.debugPrintEEPROM(24);
+                                    html_pinsetting.replace("%MESSAGE%", "ドライバー" +  String(drvNum) + "PINを設定しました");
+
+                                }else{
+                                    //PINが範囲外
+                                    Serial.println("PINが範囲外");
+                                    html_pinsetting.replace("%MESSAGE%", "PIN設定エラー");
+                                }
+                            }
+                        }
+                        type_EEPROM_PIN dlcPin = pinEEPROM.getPin(drvNum - 1);
+                        printf("EEPROMから取得したPIN: %d %d %d %d\n" , dlcPin[0], dlcPin[1], dlcPin[2], dlcPin[3]);
+
+                    }else{
+                        //ドライバー番号照合NG
+                        Serial.println("ドライバー番号が不正");
+                        html_pinsetting.replace("%MESSAGE%", "ドライバー番号設定エラー"); 
+                    }
+                }
+            }
+        }else{
+            //プレースホルダメッセージ無し
+            html_pinsetting.replace("%MESSAGE%", "");
+        }
+        sendHTML(client, html_pinsetting);  // 暗証番号設定ページ表示
     }
     else if (request.indexOf("GET /calendar") != -1) { //カレンダーページ
       String html_calendar = HTML_CALENDAR;
@@ -143,16 +257,24 @@ void main_settingMode_loop(void){
   }
 
   if(executeReset){
-    //設定終了
+
+    //サーバー終了
     server.end();
     // アクセスポイントの終了
     WiFi.end();
+    
     Serial.println("設定終了");
+
+    announceEndSettingMode();
+    
+    //リセット実行
     executeReset();
-    while(1);
+    while(1){};
   }
+
   return;
-}
+
+} //main_settingMode_loop END
 
 
 // HTMLページを送信する関数
@@ -179,6 +301,26 @@ void printWiFiStatus() {
     Serial.println(ip);
   
 }
+
+
+bool verifySecurityNo(uint16_t inputNo){
+
+    printf("verifySecurityNo input_hex:  %X\n", inputNo);
+    printf("verifySecurityNo SECURITY_NO_hex:  %X\n", (uint16_t)SECURITY_NO);
+
+    if(9999 < inputNo){
+        //uintを使っているため負の数判定は不要
+        return false;
+    }
+
+    if(inputNo == (uint16_t)SECURITY_NO){
+        return true;
+    }
+    
+    return false;
+}
+
+
 
 
 //Wi-Fiモジュール初期化失敗アナウンス
@@ -210,5 +352,12 @@ void announceWifiInitializeFailed(){
       sprintf(atpbuf,"<ALPHA VAL= SSID >wa <ALPHA VAL= %s >.",ssid);
       atp301x.talk(atpbuf,true);
     }
+    return;
+  }
+
+  //設定モード終了アナウンス
+  void announceEndSettingMode(){
+    //「設定モードを終了し本体を再起動します」
+    atp301x.talk("sette-mo'-doo/shu-ryo-_shi,ho'nntaio/saiki'do-shima_su.");
     return;
   }

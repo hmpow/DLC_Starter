@@ -1,6 +1,9 @@
 //ToDo：割り込み連打するとUART受信フリーズ（時間経過で復活）
 //要調査：wifi起動したら音声合成使用禁止　フリーズする　リソース競合？
 
+//ドライバー番号は1始まりにすること
+//設定画面で不正値を渡された際に、toIntが文字とかゼロにしてくれるので判定が楽
+
 #include <Arduino.h>
 #include <RTC.h>
 #include <EEPROM.h>
@@ -12,6 +15,8 @@
 #include "ATP301x_Arduino_SPI.h"
 #include "jpdlc_conventional.h"
 
+#include "pinEEPROM.h"
+
 #define TEST_WAIT_HUMAN_READABLE_INTERVAL_MS 25
 #define SHOW_DEBUG true
 #define EXPIRATION_HOUR_THRESHOLD 12
@@ -20,6 +25,7 @@
 #define BOOT_MODE_PIN D2
 
 const bool USE_ATP301X = true;
+const uint8_t DRIVER_LIST_NUM = 3;
 
 /* 割り込みから操作 */
 volatile uint8_t driverNum;
@@ -42,8 +48,6 @@ void announcePleaseTouch();
 void announcePleaseRetry();
 void announceExpirationTime(JPDLC_EXPIRATION_DATA);
 void announceCurrentTime();
-
-
 
 bool isEfectiveLicenseCard(JPDLC_EXPIRATION_DATA);
 
@@ -68,6 +72,8 @@ enum BOOT_MODE{
 Rcs660sAppIf rcs660sAppIf;
 ATP301x_ARDUINO_SPI atp301x;
 StartCtrl_DigitalOut startCtrl;
+
+PinEEPROM pinEEPROM;
 
 JpDrvLicNfcCommandConventional jpdlcConventional;
 
@@ -105,6 +111,9 @@ void setup() {
   }
 
   delay(10000); //Platform IO がアップロードタスクからシリアルモニタタスクに戻るのを待つ
+  
+  pinEEPROM.debugPrintEEPROM(24);
+
 
   //起動モードに応じて処理切替
   switch (bootMode)
@@ -134,65 +143,6 @@ void loop() {
       break;
   }
 }
-
-
-
-void printRTCtime(void){
-  RTCTime currentTime;
-  bool running = RTC.isRunning();
-
-  if (running) {
-    Serial.println("RTC is running!");
-  }else{
-    Serial.println("RTC is not running!");
-  }
-
-  // Get current time from RTC
-  RTC.getTime(currentTime);
-
-  // Print out UNIX time
-  Serial.print("UNIX time: ");
-  Serial.println(currentTime.getUnixTime());
-
-
-  Serial.print("YYYY/MM/DD - HH/MM/SS:");
-  Serial.print(currentTime.getYear());
-  Serial.print("/");
-  Serial.print(Month2int(currentTime.getMonth()));
-  Serial.print("/");
-  Serial.print(currentTime.getDayOfMonth());
-  Serial.print(" - ");
-  Serial.print(currentTime.getHour());
-  Serial.print(":");
-  Serial.print(currentTime.getMinutes());
-  Serial.print(":");
-  Serial.println(currentTime.getSeconds());
-}
-
-
-void setupRTC(void){
-  //何故かRTCの開始と時刻設定が一体化しているAPI仕様のため
-  //一旦取得して時刻設定という動きをしないと枚リセットごとに時計が初期化されてしまう
-
-  RTC.begin(); // RTCの初期化　これだけではRTC動き始めない
-  printRTCtime(); //表示
-
-  RTCTime rtcTime;
-  RTC.getTime(rtcTime);// RTCから現在時刻を取得
-
-  //もし2000年(リセット)されていたら、必ず有効期限切れになるように未来を設定
-  //2000年のままだと有効期限が全部OKになってしまうため
-  if(rtcTime.getYear() == 2000){
-    rtcTime.setYear(2090);
-  }
-
-  RTC.setTimeIfNotRunning(rtcTime); // 現在時刻を引き継いでRTCをスタート
-
-  printRTCtime(); //表示
-}
-
-
-
 
 void main_normalMode_setup(void){
 
@@ -542,7 +492,7 @@ void intrruptFunc_ChangeDriver(){
   /*チャタリングではない*/
 
   driverNum++;
-  if(driverNum > 3){
+  if(driverNum > DRIVER_LIST_NUM){
     driverNum = 1;
   }
   if((lastIntruuptTime - lastlast) < 1500){
@@ -569,3 +519,60 @@ void intrruptFunc_EgStartMoni(){
   return;
  
 }
+
+
+
+void printRTCtime(void){
+  RTCTime currentTime;
+  bool running = RTC.isRunning();
+
+  if (running) {
+    Serial.println("RTC is running!");
+  }else{
+    Serial.println("RTC is not running!");
+  }
+
+  // Get current time from RTC
+  RTC.getTime(currentTime);
+
+  // Print out UNIX time
+  Serial.print("UNIX time: ");
+  Serial.println(currentTime.getUnixTime());
+
+
+  Serial.print("YYYY/MM/DD - HH/MM/SS:");
+  Serial.print(currentTime.getYear());
+  Serial.print("/");
+  Serial.print(Month2int(currentTime.getMonth()));
+  Serial.print("/");
+  Serial.print(currentTime.getDayOfMonth());
+  Serial.print(" - ");
+  Serial.print(currentTime.getHour());
+  Serial.print(":");
+  Serial.print(currentTime.getMinutes());
+  Serial.print(":");
+  Serial.println(currentTime.getSeconds());
+}
+
+
+void setupRTC(void){
+  //何故かRTCの開始と時刻設定が一体化しているAPI仕様のため
+  //一旦取得して時刻設定という動きをしないと枚リセットごとに時計が初期化されてしまう
+
+  RTC.begin(); // RTCの初期化　これだけではRTC動き始めない
+  printRTCtime(); //表示
+
+  RTCTime rtcTime;
+  RTC.getTime(rtcTime);// RTCから現在時刻を取得
+
+  //もし2000年(リセット)されていたら、必ず有効期限切れになるように未来を設定
+  //2000年のままだと有効期限が全部OKになってしまうため
+  if(rtcTime.getYear() == 2000){
+    rtcTime.setYear(2090);
+  }
+
+  RTC.setTimeIfNotRunning(rtcTime); // 現在時刻を引き継いでRTCをスタート
+
+  printRTCtime(); //表示
+}
+
