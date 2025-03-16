@@ -317,6 +317,14 @@ void main_normalMode_loop() {
       atp301x.talk(atpbuf,false);
       delay(1000);
     }
+
+    bool isVerified = jpdlcConventional.executeVerify(pin_jis0201);
+    if(isVerified){
+      atp301x.talk("berifa'i se-ko-.");
+    }else{
+      atp301x.talk("berifa'i shippa'i.");
+    }
+
   }else{
     atp301x.talk("pi'nnga/hozonnsareteimase'nn.");
   }

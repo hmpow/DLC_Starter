@@ -52,6 +52,31 @@ std::vector<type_data_byte> _nfcTransceive(const std::vector<type_data_byte> inp
 }
 
 std::vector<type_data_byte> _nfcTransceive_Stub(const std::vector<type_data_byte> inputCommand){
+    
+    /* VERIFYコマンドテスト用のスタブ 本物は間違えると閉塞する */
+
+    static int stucTestCount = 0;
+    std::vector<type_data_byte> empty; 
+    std::vector<type_data_byte> success        = {0x90, 0x00};
+    std::vector<type_data_byte> fail_infRetry  = {0x6F, 0x00};
+    std::vector<type_data_byte> fail_canRetry  = {0x6F, 0xC5};
+    std::vector<type_data_byte> fail_zero      = {0x6F, 0xC0};
+    std::vector<type_data_byte> wrong_LcLe     = {0x67, 0x00};
+    std::vector<type_data_byte> already_Locked = {0x69, 0x84};
+    std::vector<type_data_byte> wrong_P1P2     = {0x6A, 0x86};
+
+    std::vector<type_data_byte> simulateResponse[] = {
+        success,
+        fail_infRetry,
+        fail_canRetry,
+        fail_zero,
+        wrong_LcLe,
+        already_Locked,
+        wrong_P1P2
+    };
+
+
+    
     printf("\r\n");
     printf("Stub_nfcTransceive\r\n");
     printf("\r\n");
@@ -69,17 +94,28 @@ std::vector<type_data_byte> _nfcTransceive_Stub(const std::vector<type_data_byte
         command.push_back( (type_data_byte)inputCommand[i] );
     }
 
-#ifdef DLC_LAYER_DEBUG
     printf("Stub_Tx To Card : ");
     for(const auto& comByte : command){
         printf("%02X ",comByte);
     }
     printf("\r\n");
-#endif
 
-printf("\r\n");
-printf("Stub_nfcTransceive Return Empty Vetor\r\n");
-printf("\r\n");
+    if(stucTestCount < 7){
+        retResponse = simulateResponse[stucTestCount];
+        stucTestCount++;
+
+        printf("Stub_Rx From Card : ");
+        for(const auto& comByte : retResponse){
+            printf("%02X ",comByte);
+        }
+    
+    }else{
+        stucTestCount = 0;
+        retResponse = empty;
+        printf("Stub_Rx From Card : empty Vector");
+    }
+
+    printf("\r\n");
 
     return retResponse;
 }
