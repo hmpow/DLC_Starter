@@ -47,6 +47,27 @@ type_EEPROM_PIN PinEEPROM::getPin(const uint8_t indexNum){
     return pin;
 }
 
+bool PinEEPROM::isSetPin(const uint8_t indexNum){
+    
+    printf("isSetPin arrSize: %d\r\n", EEPROM_PIN_LENGTH);
+
+    uint16_t startPos = indexNum * EEPROM_PIN_LENGTH;
+
+    printf("getPin startPos: %d\r\n", startPos);
+
+    if(EEPROM_SIZE < startPos + EEPROM_PIN_LENGTH){
+        return false;
+    }
+
+    for(int i = 0; i < EEPROM_PIN_LENGTH; i++){
+        if(EEPROM.read(startPos + i) == EEPROM_UNSET){
+            return false;
+        }
+    }
+
+    return true;
+}
+
 void PinEEPROM::debugPrintEEPROM(const unsigned int printLength){
 
     Serial.println("EEPROM.length(): " );

@@ -19,6 +19,7 @@ class PinEEPROM
         void clearPin(const uint8_t);
         void updatePin(const uint8_t, const type_EEPROM_PIN);
         type_EEPROM_PIN getPin(const uint8_t);
+        bool isSetPin(const uint8_t);
         void debugPrintEEPROM(const unsigned int);
 
     private:

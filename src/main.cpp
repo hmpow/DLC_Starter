@@ -285,6 +285,42 @@ void main_normalMode_loop() {
   sprintf(atpbuf,"nokorisho-go-ka'isu-wa <NUMK VAL=%d COUNTER=ka'i>/de_su.",count);
   atp301x.talk(atpbuf,true);
 
+  atp301x.talk("berifa'io/te'_suto+shima'_su.");
+
+  /*連打ではない*/
+  sprintf(atpbuf,"dora'iba-<ALPHA VAL=%d>.",driverNum);
+  atp301x.talk(atpbuf,true); 
+
+  type_EEPROM_PIN pinDecimal = pinEEPROM.getPin(driverNum - 1);
+
+  sprintf(atpbuf,"pinnwa <NUMK VAL=%d > <NUMK VAL=%d > <NUMK VAL=%d > <NUMK VAL=%d >.",
+    pinDecimal[0],pinDecimal[1],pinDecimal[2],pinDecimal[3]);
+  atp301x.talk(atpbuf,true);
+
+  printf("PIN_decimal_HEX: %02X %02X %02X %02X\n",
+    pinDecimal[0],pinDecimal[1],pinDecimal[2],pinDecimal[3]);
+
+
+  if(pinEEPROM.isSetPin(driverNum - 1)){
+    atp301x.talk("pi'nnga/hozonnsareteima'_su.");
+    type_PIN pin_jis0201 = {0,0,0,0};
+    for(int i = 0; i < 4; i++){
+      pin_jis0201[i] = jpdlcConventional.intTojisX0201(pinDecimal[i]);
+    }
+
+    printf("PIN_jis0201_HEX: %02X %02X %02X %02X\n",
+      pin_jis0201[0],pin_jis0201[1],pin_jis0201[2],pin_jis0201[3]);
+
+
+    for(int i = 5; i >= 0; i--){
+      sprintf(atpbuf,"<NUMK VAL=%d >.",i);
+      atp301x.talk(atpbuf,false);
+      delay(1000);
+    }
+  }else{
+    atp301x.talk("pi'nnga/hozonnsareteimase'nn.");
+  }
+
   atp301x.talk("kannsu-te'_suto shu-ryo-.");
 
   rcs660sAppIf.releaseNfc();
