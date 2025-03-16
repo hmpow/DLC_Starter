@@ -147,7 +147,7 @@ void main_settingMode_loop(void){
                                 Serial.println("PINが空白");
                                 pinEEPROM.clearPin(drvNum - 1);
                                 pinEEPROM.debugPrintEEPROM(24);
-                                html_pinsetting.replace("%MESSAGE%", "ドライバー" +  String(drvNum) + "PINを削除します");
+                                html_pinsetting.replace("%MESSAGE%", "ドライバー " +  String(drvNum) + " の設定を削除しました");
                                 
                             }else{
                                 //PINがある
@@ -165,7 +165,7 @@ void main_settingMode_loop(void){
                                     printf("getされたdlcPin_Int: %d %d %d %d\n" , dlcPin[0], dlcPin[1], dlcPin[2], dlcPin[3]);
                                     pinEEPROM.updatePin(drvNum - 1, dlcPin);
                                     pinEEPROM.debugPrintEEPROM(24);
-                                    html_pinsetting.replace("%MESSAGE%", "ドライバー" +  String(drvNum) + "PINを設定しました");
+                                    html_pinsetting.replace("%MESSAGE%", "ドライバー " +  String(drvNum) + " の設定を更新しました");
 
                                 }else{
                                     //PINが範囲外

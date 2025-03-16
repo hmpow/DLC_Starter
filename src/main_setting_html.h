@@ -56,12 +56,12 @@ const char HTML_PIN_SETTING[] PROGMEM = R"rawliteral(
   <body>
     <h1>マイナ免許 暗証番号登録</h1>
     <form action='/pinsetting' method='get'>
-      <p style = 'color:red;'>%MESSAGE%</p>
+      <p style = 'color:red; font-weight:bold; font-size:1.2em;'>%MESSAGE%</p>
       <b>下記は事前登録不要で使用できます。</b><br>
       ・従来型免許<br>
-      ・暗証番号未設定で発行したマイナ免許<br><br>
+      ・暗証番号未設定で発行したマイナ免許<br>
       <span style = 'font-size: 0.8em;'>
-      詳細は「運転免許証及び運転免許証作成システム等仕様書 バージョン10」をご覧ください。<br>
+      詳細は「運転免許証及び運転免許証作成システム等仕様書 バージョン10」をご覧ください。
       「免許証 仕様書」でネット検索するとヒットします。<br>
       </span>
       
