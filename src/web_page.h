@@ -45,7 +45,7 @@ const char HTML_HOME[] PROGMEM = R"rawliteral(
       )rawliteral";
 
     // 暗証番号設定ページ
-    const char HTML_LED[] PROGMEM = R"rawliteral(
+    const char HTML_PIN_SETTING[] PROGMEM = R"rawliteral(
     <!DOCTYPE html>
     <html style='max-width: 480px; margin:auto;'>
     <meta lang='ja'>

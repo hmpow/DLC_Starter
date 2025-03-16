@@ -10,16 +10,16 @@ const type_data_byte AID_DF2[] = { 0xA0,0x00,0x00,0x02,0x31,0x02,0x00,0x00,0x00,
 const type_data_byte AID_DF3[] = { 0xA0,0x00,0x00,0x02,0x48,0x03,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00 }; //RFU
 
 //MFのEFID
-const type_full_efid FULL_FEID_MF_CASE3           = 0x3F00; //MF
+const type_full_efid FULL_FEID_MF_CASE3             = 0x3F00; //仕様で必ずMFに飛べるEF-ID
 
 //MF配下のEF識別子
-const type_full_efid FULL_FEID_MF_EF01_COMMONDATA = 0x2F01; //共通データ要素
-const type_full_efid FULL_FEID_MF_EF02_PINSETTING = 0x000A; //PIN設定
-const type_full_efid FULL_FEID_MF_IEF01_PIN1      = 0x0001; //PIN1
-const type_full_efid FULL_FEID_MF_IEF02_PIN2      = 0x0002; //PIN2　使用しない
+const type_full_efid FULL_FEID_MF_EF01_COMMONDATA   = 0x2F01; //共通データ要素
+const type_full_efid FULL_FEID_MF_EF02_PINSETTING   = 0x000A; //PIN設定
+const type_full_efid FULL_FEID_MF_IEF01_PIN1        = 0x0001; //PIN1
+const type_full_efid FULL_FEID_MF_IEF02_PIN2        = 0x0002; //PIN2　使用しない
 
 //DF1配下のEF識別子
-const type_full_efid FULL_FEID_DF1_EF01_LICENSEDATA   = 0x0001; //本籍除く記載事項
+const type_full_efid FULL_FEID_DF1_EF01_LICENSEDATA = 0x0001; //本籍除く記載事項
 /* 残りは使用しないため未実装 */
 
 //DF2配下のEF識別子
@@ -28,17 +28,14 @@ const type_full_efid FULL_FEID_DF1_EF01_LICENSEDATA   = 0x0001; //本籍除く�
 //DF1配下のEF識別子
 /* 使用しないため未実装 */
 
-void getExpirationData(void);                //有効期限情報を取得  
+const uint16_t       LE_OF_EF02                = 3; //T,L,V 各1byte
+const type_tag       TAG_OF_EF02               = 0x0005; //PIN設定
+const type_tag       TAG_OF_EXPIRATION_DATA_MF = 0x0045; //有効期限情報(MF側)
 
-const uint16_t LE_OF_EF02 = 3; //T,L,V 各1byte
-const type_tag TAG_OF_EF02 = 0x0005; //PIN設定
+const uint8_t        NO_OFFSET                 = 0x00;
+const type_data_byte EF02_PIN_SETTING_ON       = 0x01;   //仕様書指定値 PIN設定ありの場合
+const type_data_byte EF02_PIN_SETTING_OFF      = 0x00;   //仕様書指定値 PIN設定無しの場合
 
-const type_tag TAG_OF_EXPIRATION_DATA_MF = 0x0045; //有効期限情報(MF側)
-
-#define NO_OFFSET 0x00
-
-const type_data_byte EF02_PIN_SETTING_ON  = 0x01;
-const type_data_byte EF02_PIN_SETTING_OFF = 0x00;
 
 
 JPDLC_ISSET_PIN_STATUS JpDrvLicNfcCommandConventional::issetPin(void){
@@ -101,7 +98,7 @@ bool JpDrvLicNfcCommandConventional::isDrvLicCard(void){
     );
 
     if(card_status == JPDLC_STATUS_ERROR){
-        return false;;
+        return false;
     }
 
     //AID_DF2 があるか
@@ -112,7 +109,7 @@ bool JpDrvLicNfcCommandConventional::isDrvLicCard(void){
     );
 
     if(card_status == JPDLC_STATUS_ERROR){
-        return false;;
+        return false;
     }
 
     //AID_DF3 があるか
@@ -123,7 +120,7 @@ bool JpDrvLicNfcCommandConventional::isDrvLicCard(void){
     );
 
     if(card_status == JPDLC_STATUS_ERROR){
-        return false;;
+        return false;
     }
 
     //ここまでreturn されなければOK

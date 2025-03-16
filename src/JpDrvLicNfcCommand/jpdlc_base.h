@@ -37,12 +37,11 @@ public:
     std::vector<type_data_byte> readBinary_currentFile_specifiedTag(type_tag); //tag指定で読んでlen分進めてってやる関数
     
     /* 種別ごと */
-    virtual JPDLC_ISSET_PIN_STATUS issetPin(void) = 0;  //PIN設定EFをSELECTしてREADBINARY
-    virtual bool isDrvLicCard(void) = 0;          //運転免許証かどうか
-    virtual JPDLC_EXPIRATION_DATA getExpirationData(void) = 0;     //有効期限情報を取得
-    virtual uint8_t getRemainingCount(void) = 0;     //残り試行回数を取得
-    virtual bool executeVerify(type_PIN) = 0;     //PIN認証を実行
-
+    virtual JPDLC_ISSET_PIN_STATUS issetPin(void)          = 0;  //PIN設定EFをSELECTしてREADBINARY
+    virtual bool                   isDrvLicCard(void)      = 0;  //運転免許証かどうか
+    virtual JPDLC_EXPIRATION_DATA  getExpirationData(void) = 0;  //有効期限情報を取得
+    virtual uint8_t                getRemainingCount(void) = 0;  //残り試行回数を取得
+    virtual bool                   executeVerify(type_PIN) = 0;  //PIN認証を実行
 
 /* memo */
 /* 子クラスだけで実装したいvirtualたちがリンクエラーになる件についてChatGPTと会話 */

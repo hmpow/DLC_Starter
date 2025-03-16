@@ -1,4 +1,5 @@
 //ToDo：割り込み連打するとUART受信フリーズ（時間経過で復活）
+//要調査：wifi起動したら音声合成使用禁止　フリーズする　リソース競合？
 
 #define TEST_WAIT_HUMAN_READABLE_INTERVAL_MS 25
 
@@ -46,7 +47,6 @@ void intrruptFunc_ChangeDriver(void);
 void intrruptFunc_EgStartMoni(void);
 void allowDrive();
 void disallowDrive();
-void reset();
 //void audioOn();
 //void audioOff();
 
@@ -55,31 +55,15 @@ void announcePleaseRetry();
 void announceExpirationTime(JPDLC_EXPIRATION_DATA);
 void announceCurrentTime();
 
-void igswRiseIrq();
-void errorBeep(int);
-
-//送信系
-std::vector<uint8_t> sendSELECTbyAID(const uint8_t*, uint8_t );
-
-//検査系
-bool checkATQB(uint8_t*, int);
-bool checkSELECTres(std::vector<uint8_t>);
-bool checkREAD_BINARYres(std::vector<uint8_t>);
 
 bool isEfectiveLicenseCard(JPDLC_EXPIRATION_DATA);
-
-/** ★↑★↑★↑★↑★↑★↑★↑★↑★↑★ mbed からコピー ★↑★↑★↑★↑★↑★↑★↑★↑★↑★ **/
-
-
-
 
 
 // #include <WiFiServer.h> //WiFiS3.h → WiFi.h → WiFiServer.h でインクルードされる
 
-//要調査：wifi起動したら音声合成使用禁止　フリーズする　リソース競合？
+
 
 /* プロトタイプ宣言 PlatformIO では必要 */
-void blinkLED(int);
 void sendHTML(WiFiClient, String);
 void send404(WiFiClient);
 void printWiFiStatus(void);
@@ -102,12 +86,7 @@ void printCardRes(const std::vector<uint8_t>);
 const char* ssid     = SECRET_SSID;  // アクセスポイントのSSID
 const char* password = SECRET_PASS;  // パスワード
 
-
 WiFiServer server(80);  // Webサーバーのポート
-
-
-const int ledPin = LED_BUILTIN;  // 内蔵LEDのピン
-int blinkCount = 0;  // LEDの点滅回数
 
 //起動モード　増やすかもしれないため enum + switch~case にしておく
 enum BOOT_MODE{
@@ -139,8 +118,6 @@ void setup() {
 
   pinMode(RESET_OUT_PIN, OUTPUT);//リセット端子駆動
   digitalWrite(RESET_OUT_PIN, LOW);//リセット端子駆動
-
-  pinMode(ledPin, OUTPUT);
 
   Serial.begin(9600);
 
@@ -187,16 +164,6 @@ void loop() {
       break;
     default:
       break;
-  }
-}
-
-// LEDを指定回数点滅させる関数
-void blinkLED(int count) {
-  for (int i = 0; i < count; i++) {
-    digitalWrite(ledPin, HIGH);
-    delay(500);
-    digitalWrite(ledPin, LOW);
-    delay(500);
   }
 }
 
@@ -283,7 +250,6 @@ void setupRTC(void){
     rtcTime.setYear(2090);
   }
 
-
   RTC.setTimeIfNotRunning(rtcTime); // 現在時刻を引き継いでRTCをスタート
 
   printRTCtime(); //表示
@@ -354,15 +320,12 @@ void main_settingMode_loop(void){
       sendHTML(client, HTML_HOME);  // ホームページ
       printRTCtime();
     }
-    else if (request.indexOf("GET /led") != -1) { //暗証番号ページ
+    else if (request.indexOf("GET /pinsetting") != -1) { //暗証番号ページ
       if (request.indexOf("count=") != -1) { // getがあれば
         int start = request.indexOf("count=") + 6;
         int end = request.indexOf(" ", start);
-        blinkCount = request.substring(start, end).toInt();
-        Serial.println("設定された点滅回数: " + String(blinkCount));
-        blinkLED(blinkCount);
       }
-      sendHTML(client, HTML_LED);  // LED設定ページ表示
+      sendHTML(client, HTML_PIN_SETTING);  // 暗証番号設定ページ表示
     }
     else if (request.indexOf("GET /calendar") != -1) { //カレンダーページ
       String html_calendar = HTML_CALENDAR;
@@ -507,20 +470,9 @@ void mbed_main() {
   
   while(!canDrive){
       // beep.setFreq(BEEP_FREQ);
-      reset();
+      rcs660sAppIf.resetDevice();
       attachInterrupt(digitalPinToInterrupt(BOOT_MODE_PIN), intrruptFunc_ChangeDriver, FALLING );
       attachInterrupt(digitalPinToInterrupt(ENGINE_START_MONITOR_PIN), intrruptFunc_EgStartMoni, FALLING );
-
-
-#if 0
-      //マイコン起動より早くキーひねると割り込みかからないから初回手動でブザー鳴らす
-      if(ig_start_sw.read()){
-          // beep.turnOn();
-      }
-
-      ig_start_sw.rise(&igswRiseIrq);
-      ig_start_sw.fall(callback(&beep, &PwmBeep::turnOff));
-#endif
 
       if(readError){
         //音声合成「読み取りエラー　もう一度タッチしてください」
@@ -662,10 +614,6 @@ void audioOff(){
 }
 #endif
 
-void reset(){
-  rcs660sAppIf.resetDevice();
-  return;
-}
 
 //「免許証をタッチしてください」アナウンス
 void announcePleaseTouch(){
@@ -727,29 +675,7 @@ void announceExpirationTime(JPDLC_EXPIRATION_DATA exData){
   return;
 }
 
-
-//無免許警報ブザー処理
-void igswRiseIrq(){
-  // beep.turnOn();
-  announcePleaseTouch();
-}
-
-//USE_ATP301X 設定に応じビープモード切替
-//ATP3011をしゃべらせる場合はatp3011でwait()、しゃべらせない場合はbeepでwait()
-void errorBeep(int shotnum){
-  if(USE_ATP301X){
-      // beep.NshotOn(shotnum, 0.2, 0.1);
-  }else{
-      // beep.NshotOnwithWait(shotnum, 0.2, 0.1);
-  }
-  return;
-}
-
-
-/*************/
-/*** 検査系 ***/
-/*************/
-
+#if 0
 //ATQB応用データを免許証仕様書記載値と照合
 bool checkATQB(uint8_t cardRes[], int len){
   if(len < 14){
@@ -763,6 +689,7 @@ bool checkATQB(uint8_t cardRes[], int len){
   }
   return true;
 }
+#endif
 
 //免許証有効期限チェック
 bool isEfectiveLicenseCard(JPDLC_EXPIRATION_DATA exData){

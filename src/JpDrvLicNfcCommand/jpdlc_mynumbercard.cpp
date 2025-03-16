@@ -13,15 +13,15 @@ const type_full_efid FULL_FEID_IEF01_PIN          = 0x0006; //PIN1
 const type_full_efid FULL_FEID_WEF02_LICENSEDATA  = 0x001B; //免許情報
 const type_full_efid FULL_FEID_WEF03_SECURITYDATA = 0x001C; //電子署名や発行者識別情報など　使用しない
 
-const uint16_t LE_OF_WEF01 = 3;       //T,L,V 各1byte
-const type_tag TAG_OF_WEF01 = 0x00C1; //PIN設定
+const uint16_t       LE_OF_WEF01            = 3;      //T,L,V 各1byte
+const type_tag       TAG_OF_WEF01           = 0x00C1; //PIN設定
 
-const type_tag TAG_OF_EXPIRATION_DATA = 0x00C5; //有効期限情報
-const type_data_byte REIWA_CODE = 0x05;         //免許証仕様上の令和の識別コード
+const type_tag       TAG_OF_EXPIRATION_DATA = 0x00C5; //有効期限情報
+const type_data_byte REIWA_CODE             = 0x05;   //免許証仕様上の令和の識別コード
 
-const uint8_t        NO_OFFSET             = 0x00;
-const type_data_byte WEF01_PIN_SETTING_ON  = 0x01;
-const type_data_byte WEF01_PIN_SETTING_OFF = 0x00;
+const uint8_t        NO_OFFSET              = 0x00;
+const type_data_byte WEF01_PIN_SETTING_ON   = 0x01;   //仕様書指定値 PIN設定ありの場合
+const type_data_byte WEF01_PIN_SETTING_OFF  = 0x00;   //仕様書指定値 PIN設定無しの場合
 
 
 JPDLC_ISSET_PIN_STATUS JpDrvLicNfcCommandMynumber::issetPin(void){
