@@ -16,7 +16,7 @@ const char HTML_HOME[] PROGMEM = R"rawliteral(
     <body>
       <h1>設定メニュー</h1>
       <ul style='font-size: 1.5em;'>
-        <li><a href='/led'>マイナ免許 暗証番号登録</a></li>
+        <li><a href='/pinsetting'>マイナ免許 暗証番号登録</a></li>
         <li><a href='/calendar'>日付の設定</a></li>
         <li><a href='/endsetting'>設定を終了し再起動</a></li>
       </ul>
@@ -56,7 +56,7 @@ const char HTML_HOME[] PROGMEM = R"rawliteral(
     </head>
     <body>
       <h1>マイナ免許 暗証番号登録</h1>
-      <form action='/led' method='get'>
+      <form action='/pinsetting' method='get'>
         <p>%MESSAGE%</p>
         <b>下記は事前登録不要で使用できます。<br><br>
         ・従来型免許<br>
