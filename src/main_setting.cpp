@@ -9,38 +9,6 @@ const char* password = SECRET_PASS;  // パスワード
 
 WiFiServer server(80);  // Webサーバーのポート
 
-// HTMLページを送信する関数
-void sendHTML(WiFiClient client, String page) {
-    client.println("HTTP/1.1 200 OK");
-    client.println("Content-Type: text/html");
-    client.println("Connection: close");
-    client.println();
-    client.println(page);
-}
-  
-void send404(WiFiClient client) {
-    client.println("HTTP/1.1 404 Not Found");
-    client.println("Content-Type: text/html");
-    client.println("Connection: close");
-    client.println();
-    client.println("<h1>404 Not Found</h1>");
-}
-  
-void printWiFiStatus() {
-    // print the SSID of the network you're attached to:
-    Serial.print("SSID: ");
-    Serial.println(WiFi.SSID());
-  
-    // print your WiFi shield's IP address:
-    IPAddress ip = WiFi.localIP();
-    Serial.print("IP Address: ");
-    Serial.println(ip);
-  
-    // print where to go in a browser:
-    Serial.print("To see this page in action, open a browser to http://");
-    Serial.println(ip);
-  
-}
 
 void main_settingMode_setup(void){
     //設定モード
@@ -67,7 +35,7 @@ void main_settingMode_setup(void){
         delay(500);
         Serial.print(".");
     }
-    
+
     Serial.println("\nアクセスポイント開始: " + String(ssid));
 
     // サーバー開始
@@ -168,7 +136,6 @@ void main_settingMode_loop(void){
       executeReset = true;
       sendHTML(client, HTML_ENDSETTING);  // 設定終了ページを表示
     }else {
-      //send404(client);  // 存在しないページ
       sendHTML(client, HTML_HOME);  // ホームページを表示
     }
     
@@ -177,6 +144,9 @@ void main_settingMode_loop(void){
 
   if(executeReset){
     //設定終了
+    server.end();
+    // アクセスポイントの終了
+    WiFi.end();
     Serial.println("設定終了");
     executeReset();
     while(1);
@@ -185,9 +155,33 @@ void main_settingMode_loop(void){
 }
 
 
+// HTMLページを送信する関数
+void sendHTML(WiFiClient client, String page) {
+    client.println("HTTP/1.1 200 OK");
+    client.println("Content-Type: text/html");
+    client.println("Connection: close");
+    client.println();
+    client.println(page);
+}
+  
+void printWiFiStatus() {
+    // print the SSID of the network you're attached to:
+    Serial.print("SSID: ");
+    Serial.println(WiFi.SSID());
+  
+    // print your WiFi shield's IP address:
+    IPAddress ip = WiFi.localIP();
+    Serial.print("IP Address: ");
+    Serial.println(ip);
+  
+    // print where to go in a browser:
+    Serial.print("To see this page in action, open a browser to http://");
+    Serial.println(ip);
+  
+}
 
 
-//ワイファイモジュール初期化失敗アナウンス
+//Wi-Fiモジュール初期化失敗アナウンス
 void announceWifiInitializeFailed(){
     if(USE_ATP301X){
       //音声合成「Wi-Fiモジュール初期化エラー　再起動してください」

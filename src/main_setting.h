@@ -6,6 +6,7 @@
 #include <Arduino.h>
 #include <WiFiS3.h>
 #include <RTC.h>
+#include <EEPROM.h>
 
 // #include <WiFiServer.h> //WiFiS3.h → WiFi.h → WiFiServer.h でインクルードされるめ不要
 

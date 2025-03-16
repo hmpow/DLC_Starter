@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include <RTC.h>
+#include <EEPROM.h>
 
 #include "main_setting.h"
 
@@ -92,8 +93,6 @@ void setup() {
 
   setupRTC();
 
-  delay(10000); //Platform IO がアップロードタスクからシリアルモニタタスクに戻るのを待つ
-
   /*************/
   /* モード切替 */
   /*************/
@@ -104,6 +103,8 @@ void setup() {
   }else{
     bootMode = NORMAL;
   }
+
+  delay(10000); //Platform IO がアップロードタスクからシリアルモニタタスクに戻るのを待つ
 
   //起動モードに応じて処理切替
   switch (bootMode)
