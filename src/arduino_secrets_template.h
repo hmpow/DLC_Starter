@@ -8,9 +8,12 @@
 #define SECRET_PASS ""
 
 //いたずら防止用暗証番号
-#define SECURITY_NO 1234
+#define SECRET_SECURITY_NO 1234
 
 //IPアドレスをデフォルトから変えたい場合のみdefine (ifdefで動作)
-//#define SECRET_IP_ADDR 192,48,56,2 
+//192.168.SECRET_IP_ADDR_UPPER.SECRET_IP_ADDR_LOWER
+#define SECRET_IP_ADDR_UPPER 10
+#define SECRET_IP_ADDR_LOWER 1
+
 
 #endif // ARDUINO_SECRETS_H

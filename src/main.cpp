@@ -13,7 +13,9 @@
 #include "StartCtrl.h"
 #include "rcs660s_app_if.h"
 #include "ATP301x_Arduino_SPI.h"
+
 #include "jpdlc_conventional.h"
+#include "jpdlc_mynumbercard.h"
 
 #include "pinEEPROM.h"
 
@@ -74,8 +76,6 @@ ATP301x_ARDUINO_SPI atp301x;
 StartCtrl_DigitalOut startCtrl;
 
 PinEEPROM pinEEPROM;
-
-JpDrvLicNfcCommandConventional jpdlcConventional;
 
 char atpbuf[ATP_MAX_LEN];
 
@@ -169,23 +169,24 @@ void main_normalMode_loop() {
   disallowDrive();
   //audioOn();
   
-  bool canDrive = false;
+  bool isDriveAllowed = false;
   bool readError = false;
-  char atpbuf[ATP_MAX_LEN];
-  
-  //uint8_t* resArray = new uint8_t[rcs620.RETURN_ENVELOPE_SIZE];
-  std::vector<uint8_t> resVector;
 
-  int resLen;
+  //インスタンス
+  JpDrvLicNfcCommandConventional jpdlcConventional;
+  JpDrvLicNfcCommandMynumber jpdlcMyNumberCard;
   
-  // ig_start_sw.mode (PullDown);
+  //基底クラスは純粋仮想関数を持つためポインタ変数でしか置けない
+  JpDrvLicNfcCommandBase *drvLicCard = &jpdlcMyNumberCard; //マイナ免許証優先で判定
   
-  while(!canDrive){
-      // beep.setFreq(BEEP_FREQ);
+  while(!isDriveAllowed){
+
       rcs660sAppIf.resetDevice();
+
       attachInterrupt(digitalPinToInterrupt(BOOT_MODE_PIN), intrruptFunc_ChangeDriver, FALLING );
       attachInterrupt(digitalPinToInterrupt(ENGINE_START_MONITOR_PIN), intrruptFunc_EgStartMoni, FALLING );
 
+      //失敗してループされた場合は失敗フラグが立っているためアナウンスを切り替える
       if(readError){
         //音声合成「読み取りエラー　もう一度タッチしてください」
         announcePleaseRetry();
@@ -196,43 +197,67 @@ void main_normalMode_loop() {
       }
 
   
-     //NFC Type-Bをポーリング
+     //STEP1：NFC Type-Bをポーリング
+
      rcs660sAppIf.setNfcType(NFC_TYPE_B);
      rcs660sAppIf.updateTxAndRxFlag({false, false, 3, false});
      bool isCatch = rcs660sAppIf.catchNfc(RETRY_CATCH_INFINITE);
 
+     /* catchNFCは無限ループに設定しているため捕捉できるまで抜けてこない */
+
+     //カードと通信中はスイッチ割り込み無効
+     detachInterrupt(digitalPinToInterrupt(BOOT_MODE_PIN));
+     detachInterrupt(digitalPinToInterrupt(ENGINE_START_MONITOR_PIN));
      /* noInterrupts() 使うとUART受信割り込みまで止まってしまいNG */
 
-    detachInterrupt(digitalPinToInterrupt(BOOT_MODE_PIN)); //単品割り込み設定
-    detachInterrupt(digitalPinToInterrupt(ENGINE_START_MONITOR_PIN)); //単品割り込み設定
 
-     /* 捕捉できるまでcatchNfcを抜けてこない */
-
-#if 0
-      //警報割り込み解除
-      ig_start_sw.rise(callback(&beep, &PwmBeep::turnOff));
-      // beep.turnOff();
-#endif      
-      if(USE_ATP301X){
-          //タッチ音「ポーン」
-          atp301x.chimeJ(false);
-      }else{
-          //ビープ「ピッ」
-          // beep.oneshotOn(0.1);    
-      }
-
-    //免許証判定STEP2 3つのAIDが存在するかチェック
-
-    if(!jpdlcConventional.isDrvLicCard()){
-      readError = true;
-      continue;
+    if(USE_ATP301X){
+      //タッチ音「ポーン」
+      atp301x.chimeJ(false);
+    }else{
+      //ビープ「ピッ」
+      // beep.oneshotOn(0.1);    
     }
-    /*後でマイナ免許証判定を入れる*/
 
+    //STEP2 仕様で規定された3つのAIDが存在するかチェック
 
-    //免許証判定STEP3 有効期限チェック
+    //選択された免許種別でダメだったら切り替えてリトライ
+    if(!drvLicCard->isDrvLicCard()){
+      if(drvLicCard == &jpdlcMyNumberCard){
+        drvLicCard = &jpdlcConventional;  //マイナ免許証でない場合は従来免許証に切り替え
+        if(SHOW_DEBUG){
+          Serial.println("マイナ免許証でないため従来免許証に切り替え");
+        }
+      }else{
+        drvLicCard = &jpdlcMyNumberCard;  //従来免許証でない場合はマイナ免許証に切り替え
+        if(SHOW_DEBUG){
+          Serial.println("従来免許証でないためマイナ免許証に切り替え");
+        }
+      }
+      
+      //免許証種別を切り替えてもダメなら諦める
+      if(!drvLicCard->isDrvLicCard()){
+        if(SHOW_DEBUG){
+          Serial.println("免許証ではないためリトライ");
+        }
+        readError = true;
+        continue;
+      }else{
+        //OK 次STEPへ
+      }
+    }else{
+      //OK 次STEPへ
+    }
 
-    JPDLC_EXPIRATION_DATA expirarionData = jpdlcConventional.getExpirationData();
+    //STEP3 有効期限チェック
+
+    //マイナンバーの場合のみ 暗証番号照合
+    if(drvLicCard == &jpdlcMyNumberCard){
+      
+    }
+
+    //従来・マイナ兼用
+    JPDLC_EXPIRATION_DATA expirarionData = drvLicCard->getExpirationData();
     if(expirarionData.yyyy == 0){
       readError = true;
       continue;
@@ -242,7 +267,7 @@ void main_normalMode_loop() {
         allowDrive();
         
         //ループ終わり
-        canDrive = true;
+        isDriveAllowed = true;
 
     }else{
       if(USE_ATP301X){
@@ -269,6 +294,10 @@ void main_normalMode_loop() {
   //オーディオ回路スリープ
   //audioOff();
 
+  /********************************************/
+  /************** テストシーケンス **************/
+  /********************************************/
+
   atp301x.talk("kannsu-te'_suto kai_shi.");
 
   atp301x.talk("pinnsette-_shuto_kute'_suto.");
@@ -287,7 +316,6 @@ void main_normalMode_loop() {
 
   atp301x.talk("berifa'io/te'_suto+shima'_su.");
 
-  /*連打ではない*/
   sprintf(atpbuf,"dora'iba-<ALPHA VAL=%d>.",driverNum);
   atp301x.talk(atpbuf,true); 
 

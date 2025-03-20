@@ -31,9 +31,17 @@ void main_settingMode_setup(void){
 
     matrix.loadFrame(matrix_WiFi);
 
-#ifdef SECRET_IP_ADDR
+#ifdef SECRET_IP_ADDR_UPPER
+#ifdef SECRET_IP_ADDR_LOWER
     //IPアドレスの設定
-    WiFi.config(IPAddress(SECRET_IP_ADDR));
+    if(0 < SECRET_IP_ADDR_UPPER
+      && SECRET_IP_ADDR_UPPER < 255 
+      && 0 < SECRET_IP_ADDR_LOWER 
+      && SECRET_IP_ADDR_LOWER < 255){
+        
+        WiFi.config(IPAddress(192, 168, SECRET_IP_ADDR_UPPER, SECRET_IP_ADDR_LOWER));
+    }
+#endif
 #endif
 
     announcePleaseConnectWiFi();
@@ -306,14 +314,14 @@ void printWiFiStatus() {
 bool verifySecurityNo(uint16_t inputNo){
 
     printf("verifySecurityNo input_hex:  %X\n", inputNo);
-    printf("verifySecurityNo SECURITY_NO_hex:  %X\n", (uint16_t)SECURITY_NO);
+    printf("verifySecurityNo SECURITY_NO_hex:  %X\n", (uint16_t)SECRET_SECURITY_NO);
 
     if(9999 < inputNo){
         //uintを使っているため負の数判定は不要
         return false;
     }
 
-    if(inputNo == (uint16_t)SECURITY_NO){
+    if(inputNo == (uint16_t)SECRET_SECURITY_NO){
         return true;
     }
     
