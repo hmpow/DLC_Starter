@@ -43,6 +43,10 @@ std::vector<type_data_byte> JpDrvLicNfcCommandBase::readBinary_currentFile_speci
         cardResVect.clear();
         len = 0;
 
+                //Tag解析
+                printf("タグ探し関数 次の指示offset = %04X\n", currentOffset);
+        
+
         cardResVect = parseResponseReadBinary(
             _nfcTransceive(
                 assemblyCommandReadBinary_onlyCurrentEF_OffsetAddr15bit(currentOffset, 2)
@@ -55,6 +59,8 @@ std::vector<type_data_byte> JpDrvLicNfcCommandBase::readBinary_currentFile_speci
         }
 
         //Tag解析
+        printf("タグ探し関数 tag = %02X, len = %02X\n", cardResVect[0], cardResVect[1]);
+        
         if(tagByte == cardResVect[0]){
             //目的のタグ
             //len分だけ読む
@@ -239,7 +245,7 @@ std::vector<type_data_byte> JpDrvLicNfcCommandBase::assemblyCommandReadBinary_on
         return std::vector<type_data_byte>(); //空のvector
     }
 
-    const type_data_byte p1 = (type_data_byte)((offset >> 7) & 0x7F); //P1　Offsetの上位7bit
+    const type_data_byte p1 = (type_data_byte)((offset >> 8) & 0x7F); //P1　Offsetの上位7bit
     const type_data_byte p2 = (type_data_byte)(offset & 0x00FF);      //P2  Offsetの下位8bit
     
     return _assemblyCommandReadBinary_Base(p1, p2, le);

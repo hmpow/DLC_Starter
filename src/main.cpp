@@ -253,7 +253,8 @@ void main_normalMode_loop() {
 
     //マイナンバーの場合のみ 暗証番号照合
     if(drvLicCard == &jpdlcMyNumberCard){
-      
+      //残り照合回数確認
+      //Verify実行
     }
 
     //従来・マイナ兼用
@@ -356,6 +357,14 @@ void main_normalMode_loop() {
         delay(500);
       }
     }
+
+
+    //従来・マイナ兼用
+    JPDLC_EXPIRATION_DATA expirarionData = jpdlcMyNumberCard.stub_getExpirationData();
+    if(expirarionData.yyyy != 0){
+      announceExpirationTime(expirarionData);
+    }
+    
 
   }else{
     atp301x.talk("pi'nnga/hozonnsareteimase'nn.");

@@ -17,11 +17,19 @@ const uint16_t       LE_OF_WEF01            = 3;      //T,L,V 各1byte
 const type_tag       TAG_OF_WEF01           = 0x00C1; //PIN設定
 
 const type_tag       TAG_OF_EXPIRATION_DATA = 0x00C5; //有効期限情報
+
 const type_data_byte REIWA_CODE             = 0x05;   //免許証仕様上の令和の識別コード
 
 const uint8_t        NO_OFFSET              = 0x00;
 const type_data_byte WEF01_PIN_SETTING_ON   = 0x01;   //仕様書指定値 PIN設定ありの場合
 const type_data_byte WEF01_PIN_SETTING_OFF  = 0x00;   //仕様書指定値 PIN設定無しの場合
+
+
+
+//従来免許をJISX0201形式有効期限のスタブ代わりに使用
+const type_data_byte STUB_AID_DF1[] = { 0xA0,0x00,0x00,0x02,0x31,0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00 }; //記載事項
+const type_full_efid STUB_FULL_FEID_EF01_LICENSEDATA  = 0x0001; //記載事項のEFID
+const type_tag       STUB_TAG_OF_EXPIRATION_DATA = 0x001B; //有効期限のTAG
 
 
 JPDLC_ISSET_PIN_STATUS JpDrvLicNfcCommandMynumber::issetPin(void){
@@ -198,4 +206,59 @@ bool JpDrvLicNfcCommandMynumber::executeVerify(type_PIN pin){
     );
 
     return retVal;
+}
+
+
+
+
+JPDLC_EXPIRATION_DATA JpDrvLicNfcCommandMynumber::stub_getExpirationData(void){
+
+    JPDLC_EXPIRATION_DATA expirationData = {0,0,0};
+
+    std::vector<type_data_byte> retVect;
+
+    //DF01を選択
+    //AID_DF1 があるか
+    JPDLC_CARD_STATUS card_status = parseResponseSelectFile(
+        _nfcTransceive(
+            assemblyCommandSelectFile_AID(STUB_AID_DF1, sizeof(STUB_AID_DF1)/sizeof(STUB_AID_DF1[0]))
+        )
+    );
+
+    if(card_status == JPDLC_STATUS_ERROR){
+        return expirationData;
+    }
+
+    //EF01を選択
+    card_status = parseResponseSelectFile(
+        _nfcTransceive(
+            assemblyCommandSelectFile_fullEfId(STUB_FULL_FEID_EF01_LICENSEDATA)
+        )
+    );
+
+    if(card_status == JPDLC_STATUS_ERROR){
+        return expirationData;
+    }
+
+
+    retVect = readBinary_currentFile_specifiedTag(STUB_TAG_OF_EXPIRATION_DATA); 
+    if(retVect.empty() == true){
+        return expirationData;
+    }
+
+    if(retVect.size() > 7){
+        return expirationData;
+    }
+
+    if(retVect[0] != REIWA_CODE){
+        return expirationData;
+    }
+
+    uint16_t exData_reiwa = 10 * jisX0201toInt(retVect[1]) + jisX0201toInt(retVect[2]);
+    expirationData.yyyy = _reiwaToYYYY(exData_reiwa);
+
+    expirationData.m = 10 * jisX0201toInt(retVect[3]) + jisX0201toInt(retVect[4]);
+    expirationData.d = 10 * jisX0201toInt(retVect[5]) + jisX0201toInt(retVect[6]);
+
+    return expirationData;
 }
