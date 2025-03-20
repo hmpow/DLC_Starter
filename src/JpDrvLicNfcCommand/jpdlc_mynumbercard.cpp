@@ -242,6 +242,14 @@ JPDLC_EXPIRATION_DATA JpDrvLicNfcCommandMynumber::stub_getExpirationData(void){
 
 
     retVect = readBinary_currentFile_specifiedTag(STUB_TAG_OF_EXPIRATION_DATA); 
+
+    printf("セキュア領域から読めた有効期限データ；");
+    for (int i = 0; i < retVect.size(); i++)
+    {
+        printf("%02X ",retVect[i]);
+    }
+    printf("\n");
+
     if(retVect.empty() == true){
         return expirationData;
     }
@@ -250,7 +258,7 @@ JPDLC_EXPIRATION_DATA JpDrvLicNfcCommandMynumber::stub_getExpirationData(void){
         return expirationData;
     }
 
-    if(retVect[0] != REIWA_CODE){
+    if(jisX0201toInt(retVect[0]) != REIWA_CODE){
         return expirationData;
     }
 
