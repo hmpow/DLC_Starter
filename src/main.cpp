@@ -350,7 +350,11 @@ void main_normalMode_loop() {
     if(isVerified){
       atp301x.talk("berifa'i se-ko-.");
     }else{
-      atp301x.talk("berifa'i shippa'i.");
+      rcs660sAppIf.releaseNfc();
+      while(1){
+        atp301x.talk("berifa'i shippa'i.",true);
+        delay(500);
+      }
     }
 
   }else{
