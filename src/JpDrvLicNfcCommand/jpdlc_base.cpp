@@ -10,6 +10,9 @@ const JPDLC_STATUS_RESPONSE STATUS_SUCCESS      = {0x90, 0x00};
 const JPDLC_STATUS_RESPONSE STATUS_DF_IS_LOCKED = {0x62, 0x83};
 const JPDLC_STATUS_RESPONSE STATUS_VERIFY_NG    = {0x63, 0x00};
 
+//2バイトLENの識別フラグは従来・マイナ共通
+const type_data_byte TWO_BYTE_LEN_FLAG = 0x82;
+
 
 
 JpDrvLicNfcCommandBase::JpDrvLicNfcCommandBase(){
@@ -28,7 +31,7 @@ JpDrvLicNfcCommandBase::~JpDrvLicNfcCommandBase(){
 std::vector<type_data_byte> JpDrvLicNfcCommandBase::readBinary_currentFile_specifiedTag(type_tag tag){
 
     //現状1バイトタグのみ対応
-    const type_data_byte tagByte = (type_data_byte)(tag & 0xFF); //下位8bit
+    const type_data_byte targetTagByte = (type_data_byte)(tag & 0xFF); //下位8bit
 
     std::vector<type_data_byte> retVect;
 
@@ -37,14 +40,16 @@ std::vector<type_data_byte> JpDrvLicNfcCommandBase::readBinary_currentFile_speci
 
     uint16_t currentOffset = 0;
     uint16_t len = 0;
+    type_data_byte responseTag = 0x00;
     bool continueFlag = true;
 
     do{
         cardResVect.clear();
         len = 0;
+        responseTag = 0x00;
 
-                //Tag解析
-                printf("タグ探し関数 次の指示offset = %04X\n", currentOffset);
+        //Tag解析
+        printf("タグ探し関数 次の指示offset = %04X\n", currentOffset);
         
 
         cardResVect = parseResponseReadBinary(
@@ -55,17 +60,50 @@ std::vector<type_data_byte> JpDrvLicNfcCommandBase::readBinary_currentFile_speci
 
         if(cardResVect.empty()){
             //エラー
-            return retVect;
+            return retVect; //空ベクター
         }
 
         //Tag解析
-        printf("タグ探し関数 tag = %02X, len = %02X\n", cardResVect[0], cardResVect[1]);
+        responseTag = cardResVect[0];
+        printf("タグ探し関数 tag = %02X\n", responseTag);
         
-        if(tagByte == cardResVect[0]){
-            //目的のタグ
-            //len分だけ読む
+        //Len解析
+        //Lenの頭がTWO_BYTE_LEN_FLAG(0x82)の時はLenが0x82に続く2バイト
+
+        if(cardResVect[1] == TWO_BYTE_LEN_FLAG){
+            currentOffset += 2; // tag と TWO_BYTE_LEN_FLAG 分進める
+            cardResVect = parseResponseReadBinary(
+                _nfcTransceive(
+                    assemblyCommandReadBinary_onlyCurrentEF_OffsetAddr15bit(currentOffset, 2)
+                )
+            );
+            if(cardResVect.empty()){
+                //エラー
+                return retVect; //空ベクター
+            }
+            //2バイトLEN
+            len = (uint16_t)(cardResVect[0]) << 8 | (uint16_t)(cardResVect[1]);
+
+            printf("タグ探し関数 2バイトlen = %04X\n", len);
+        }else{
+            //1バイトLEN
             len = (uint16_t)cardResVect[1];
-            currentOffset += 2; //tagとlen分進める
+
+            printf("タグ探し関数 1バイトlen = %04X\n", len);
+        }
+
+        currentOffset += 2; //tagとlen分 or 2バイトLen分進める
+
+        if(targetTagByte == responseTag){
+            //目的のタグ
+
+            if(len == 0){
+                //目的のデータのLENが0(格納されていない)ならば終了
+                continueFlag = false;
+                return retVect; //空ベクター
+            }
+          
+            //目的のタグでデータがあればlen分だけ読む
             retVect = parseResponseReadBinary(
                 _nfcTransceive(
                     assemblyCommandReadBinary_onlyCurrentEF_OffsetAddr15bit(currentOffset, len)
@@ -75,8 +113,6 @@ std::vector<type_data_byte> JpDrvLicNfcCommandBase::readBinary_currentFile_speci
             return retVect;
         }else{
             //目的のタグでなければlen分だけ飛ばす
-            len = (uint16_t)cardResVect[1];
-            currentOffset += 2; //tagとlen分進める
             currentOffset += len; //len分進める
         }
     }while(continueFlag);
