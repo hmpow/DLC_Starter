@@ -20,6 +20,7 @@ const type_full_efid FULL_FEID_MF_IEF02_PIN2        = 0x0002; //PIN2　使用し
 
 //DF1配下のEF識別子
 const type_full_efid FULL_FEID_DF1_EF01_LICENSEDATA = 0x0001; //本籍除く記載事項
+const type_full_efid FULL_FEID_DF1_EF07_SIGNATURE   = 0x0007; //電子署名 2バイトLEN読みテストに使用
 /* 残りは使用しないため未実装 */
 
 //DF2配下のEF識別子
@@ -28,14 +29,17 @@ const type_full_efid FULL_FEID_DF1_EF01_LICENSEDATA = 0x0001; //本籍除く記�
 //DF1配下のEF識別子
 /* 使用しないため未実装 */
 
-const uint16_t       LE_OF_EF02                = 3; //T,L,V 各1byte
-const type_tag       TAG_OF_EF02               = 0x0005; //PIN設定
-const type_tag       TAG_OF_EXPIRATION_DATA_MF = 0x0045; //有効期限情報(MF側)
+const uint16_t       LE_OF_EF02               = 3; //T,L,V 各1byte
+const type_tag       TAG_OF_EF02              = 0x0005; //PIN設定
+const type_tag       TAG_EXPIRATION_MF   = 0x0045; //有効期限情報(MF側)
+const type_tag       TAG_EXPIRATION_EF01 = 0x001B; //有効期限のTAG(EF01側)
+const type_tag       TAG_SIGNATURE_EF07  = 0x00B1; //電子署名のTAG(EF07) 2バイトLEN読みテストに使用
 
-const uint8_t        NO_OFFSET                 = 0x00;
-const type_data_byte EF02_PIN_SETTING_ON       = 0x01;   //仕様書指定値 PIN設定ありの場合
-const type_data_byte EF02_PIN_SETTING_OFF      = 0x00;   //仕様書指定値 PIN設定無しの場合
+const uint8_t        NO_OFFSET                = 0x00;
 
+const type_data_byte REIWA_CODE               = 0x05;   //免許証仕様上の令和の識別コード
+const type_data_byte EF02_PIN_SETTING_ON      = 0x01;   //仕様書指定値 PIN設定ありの場合
+const type_data_byte EF02_PIN_SETTING_OFF     = 0x00;   //仕様書指定値 PIN設定無しの場合
 
 
 JPDLC_ISSET_PIN_STATUS JpDrvLicNfcCommandConventional::issetPin(void){
@@ -160,7 +164,7 @@ JPDLC_EXPIRATION_DATA JpDrvLicNfcCommandConventional::getExpirationData(void){
 
     std::vector<type_data_byte> retVect;
 
-    retVect = readBinary_currentFile_specifiedTag(TAG_OF_EXPIRATION_DATA_MF); 
+    retVect = readBinary_currentFile_specifiedTag(TAG_EXPIRATION_MF); 
     if(retVect.empty() == true){
         return expirationData;
     }
@@ -258,3 +262,104 @@ uint8_t JpDrvLicNfcCommandConventional::packedBCDtoInt(type_data_byte input){
     return out;
   }
 
+
+  /* 以下は開発・テスト用 DLC starterでは使用しない */
+
+
+  JPDLC_EXPIRATION_DATA JpDrvLicNfcCommandConventional::getExpirationData_from_DF1_EF01(void){
+
+    JPDLC_EXPIRATION_DATA expirationData = {0,0,0};
+
+    std::vector<type_data_byte> cardResVect;
+
+    //DF01を選択
+    //AID_DF1 があるか
+    JPDLC_CARD_STATUS card_status = parseResponseSelectFile(
+        _nfcTransceive(
+            assemblyCommandSelectFile_AID(AID_DF1, sizeof(AID_DF1)/sizeof(AID_DF1[0]))
+        )
+    );
+
+    if(card_status == JPDLC_STATUS_ERROR){
+        return expirationData;
+    }
+
+    //EF01を選択
+    card_status = parseResponseSelectFile(
+        _nfcTransceive(
+            assemblyCommandSelectFile_fullEfId(FULL_FEID_DF1_EF01_LICENSEDATA)
+        )
+    );
+
+    if(card_status == JPDLC_STATUS_ERROR){
+        return expirationData;
+    }
+
+
+    cardResVect = readBinary_currentFile_specifiedTag(TAG_EXPIRATION_EF01); 
+
+    printf("セキュア領域から読めた有効期限データ；");
+    for (int i = 0; i < cardResVect.size(); i++)
+    {
+        printf("%02X ",cardResVect[i]);
+    }
+    printf("\n");
+
+    if(cardResVect.empty() == true){
+        return expirationData;
+    }
+
+    if(cardResVect.size() > 7){
+        return expirationData;
+    }
+
+    if(jisX0201toInt(cardResVect[0]) != REIWA_CODE){
+        return expirationData;
+    }
+
+    uint16_t exData_reiwa = 10 * jisX0201toInt(cardResVect[1]) + jisX0201toInt(cardResVect[2]);
+    expirationData.yyyy = _reiwaToYYYY(exData_reiwa);
+
+    expirationData.m = 10 * jisX0201toInt(cardResVect[3]) + jisX0201toInt(cardResVect[4]);
+    expirationData.d = 10 * jisX0201toInt(cardResVect[5]) + jisX0201toInt(cardResVect[6]);
+
+    return expirationData;
+}
+
+std::vector<type_data_byte> JpDrvLicNfcCommandConventional::getSignature_from_DF1_EF07(void){
+
+    std::vector<type_data_byte> retVect;
+    std::vector<type_data_byte> cardResVect;
+
+
+    //DF01を選択
+    //AID_DF1 があるか
+    JPDLC_CARD_STATUS card_status = parseResponseSelectFile(
+        _nfcTransceive(
+            assemblyCommandSelectFile_AID(AID_DF1, sizeof(AID_DF1)/sizeof(AID_DF1[0]))
+        )
+    );
+
+    if(card_status == JPDLC_STATUS_ERROR){
+        return retVect;
+    }
+
+    //EF07を選択
+    card_status = parseResponseSelectFile(
+        _nfcTransceive(
+            assemblyCommandSelectFile_fullEfId(FULL_FEID_DF1_EF07_SIGNATURE)
+        )
+    );
+
+    if(card_status == JPDLC_STATUS_ERROR){
+        return retVect;
+    }
+
+    retVect = readBinary_currentFile_specifiedTag(TAG_SIGNATURE_EF07); 
+
+    //テスト用関数のためチェックなどは省略
+    //readBinary_currentFile_specifiedTagがテスト対象
+    //RC-S660/Sではバッファ超過でエラー終了するはずだが2バイトLEN判定テストが目的のためOK
+
+    return retVect;
+}

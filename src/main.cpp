@@ -360,10 +360,13 @@ void main_normalMode_loop() {
 
 
     //従来・マイナ兼用
-    JPDLC_EXPIRATION_DATA expirarionData = jpdlcMyNumberCard.stub_getExpirationData();
+    JPDLC_EXPIRATION_DATA expirarionData = jpdlcConventional.getExpirationData_from_DF1_EF01();
     if(expirarionData.yyyy != 0){
       announceExpirationTime(expirarionData);
     }
+
+    atp301x.talk("nibaito'renn bunn_kite'_suto.");
+    jpdlcConventional.getSignature_from_DF1_EF07();
     
 
   }else{

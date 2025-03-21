@@ -18,9 +18,6 @@ class JpDrvLicNfcCommandMynumber : public JpDrvLicNfcCommandBase{
     JPDLC_EXPIRATION_DATA getExpirationData(void) override;
     uint8_t getRemainingCount(void) override;
     bool executeVerify(type_PIN) override;
-
-    //従来免許をJISX0201形式有効期限のスタブ代わりに使用
-    JPDLC_EXPIRATION_DATA stub_getExpirationData(void);
 };
 
 #endif // JP_DRV_LIC_NFC_COMMAND_MYNUMBERCARD_H
