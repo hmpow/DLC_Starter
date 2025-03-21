@@ -85,6 +85,9 @@ public:
     char* jisX0208toUtf8(char*);
 #endif
 
+protected:
+//privateにするとサブクラスからアクセスできないのでダメ
+
     std::vector<type_data_byte> _assemblyCommandReadBinary_Base(const type_data_byte, const type_data_byte, const uint16_t);
     
     /* ツール */
