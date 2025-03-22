@@ -19,12 +19,16 @@
 
 #include "pinEEPROM.h"
 
+#include "port_assign_define.h"
+#define ENGINE_START_MONITOR_PIN  PORT_A_DEF_ENGINE_START_MONI 
+#define BOOT_MODE_PIN             PORT_A_DEF_BOOT_MODE
+
+
 #define TEST_WAIT_HUMAN_READABLE_INTERVAL_MS 25
 #define SHOW_DEBUG true
 #define EXPIRATION_HOUR_THRESHOLD 12
 
-#define ENGINE_START_MONITOR_PIN D3
-#define BOOT_MODE_PIN D2
+
 
 const bool USE_ATP301X = true;
 const uint8_t DRIVER_LIST_NUM = 3;
@@ -340,7 +344,7 @@ void main_normalMode_loop() {
     }
 
     bool isVerified = jpdlcConventional.executeVerify_DecimalInput(pinDecimal);
-    
+
     if(isVerified){
       atp301x.talk("berifa'i se-ko-.");
     }else{

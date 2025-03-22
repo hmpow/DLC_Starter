@@ -1,12 +1,14 @@
 #ifndef STARTCTRL_H
 #define STARTCTRL_H
 
+#include <Arduino.h>
+
+#include "port_assign_define.h"
 // デジタル出力の場合の設定
-#define START_CTRL_PIN D5
+#define START_CTRL_PIN PORT_A_DEF_START_CTRL_RELAY_OUT
 #define ALLOW_LOGIC HIGH
 #define DENY_LOGIC  LOW
 
-#include <Arduino.h>
 
 /*************/
 /* 基底クラス */

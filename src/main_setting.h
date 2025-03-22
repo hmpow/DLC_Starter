@@ -1,8 +1,6 @@
 #ifndef MAIN_SETTING_H
 #define MAIN_SETTING_H
 
-#define RESET_OUT_PIN D7
-
 #include <Arduino.h>
 #include <WiFiS3.h>
 #include <RTC.h>
@@ -17,6 +15,9 @@
 #include "ATP301x_Arduino_SPI.h"
 
 #include "pinEEPROM.h"
+
+#include "port_assign_define.h"
+#define RESET_OUT_PIN PORT_A_DEF_SELF_RESET_OUT
 
 /* 通常モードと共用のプロトタイプ宣言や数 */
 /* extern 付き宣言してメイン側に置いたものをリンクしてもらう */
