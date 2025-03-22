@@ -4,3 +4,6 @@
 [submodule "submodule/RC_S660_S_DriverForMCU"]
 	path = submodule/RC_S660_S_DriverForMCU
 	url = https://github.com/hmpow/RC_S660_S_DriverForMCU.git
+[submodule "submodule/JpDrvLicNfcCommand"]
+	path = submodule/JpDrvLicNfcCommand
+	url = https://github.com/hmpow/JpDrvLicNfcCommand.git
