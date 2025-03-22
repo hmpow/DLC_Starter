@@ -11,24 +11,49 @@ WiFi 機能を生かし、設定はスマホからワイヤレスで行います
 
 ## 基本操作
 
+### 通常モード
+
+
+
+### 設定モード
+
+スマホを機内モードに入れてから　Arduino Uno に接続しないと設定画面に接続できません。
+
+モバイル回線側が接続されていると、~~WAN 側を探しに行ってページが見つからないエラーになるか~~ (上位2バイトをローカルIP割り当て範囲の 192.168 に固定したことで解消？)、検索キーワードとして扱われてIPアドレスに関する検索結果が出てきます。
 
 
 
 ## ソフトウェア
 
-### 開発環境
+### 注 使用ライブラリのライセンスについて
 
-OS : Windows 11 23H2/24H2
+DLC starter 自体は MIT ライセンスで公開していますが、ビルドするとLGPLライセンスのライブラリが静的リンクされます。
 
-IDE : Visual Studio Code
+このリポジトリでJGPLライセンスのライブラリの "再頒布" はしていません。各々の開発環境で Arduino からダウンロードされ各PC内でリンクされます。
 
-プラグイン : PlatformIO
+https://github.com/arduino/ArduinoCore-renesas/
 
-※ ハードウエアは Arduino を使っていますが PlatformIO 前提のコードになっており Arduino IDE ではコンパイルできません
+うち LGPLのライブラリ(DLC starter から include している階層であり、ライブラリ内の芋づる式includeは未確認です)
 
-### 設定
++ SPI
++ EEPROM
++ WiFi3 
 
-arduino_secrets_template.h に下記を設定して arduino_secrets.h にリネームします。
+### 動作確認済み開発環境
+
+OS : Windows 11 Pro 23H2/24H2
+
+Visual Studio Code : 1.98 (Japanese Language Pack 有効)
+
+IDE : PlatformIO IDE 3.3.4 (VScode 拡張機能)
+
+※ ハードウェアは Arduino を使っていますが PlatformIO 前提のコードになっており Arduino IDE ではビルドできません
+
+※ Clean してから Build し直さないと WiFi が繋がらなくなるようです
+
+### 設定ファイル arduino_secrets.h
+
+arduino_secrets_template.h を arduino_secrets.h にリネームして使用します。
 
 
 | 種別 | 定数名 | 用途 | 設定値 | 不要な場合 |
@@ -41,6 +66,10 @@ arduino_secrets_template.h に下記を設定して arduino_secrets.h にリネ�
  ※SECRET_IP_ADDR_UPPER と SECRET_IP_ADDR_LOWER は、片方のみの設定はできません(片方のみ定義の場合は未設定扱いになります)
 
  ※SECRET_IP_ADDR_UPPER と SECRET_IP_ADDR_LOWER 未設定の場合は、Arduino WiFi ライブラリのデフォルト値となります
+
+### ディレクトリ構造
+
+
 
 
 ### カスタマイズ
@@ -79,10 +108,3 @@ NFCカードリーダ : SONY RC-S/660S
 
 ### 
 
-## 注
-
-スマホは機内モードに入れてから　Arduino Uno に接続しないと、WAN 側を探しに行ってページが見つからないエラーになります。
-
-Clean してから Build し直さないと WiFi が繋がらなくなるようです。
-
-arduino_secrets_template.h に好きな SSID と いたずら防止用暗証番号 を設定し、 arduino_secrets.h にリネームします。
