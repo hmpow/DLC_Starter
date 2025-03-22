@@ -122,6 +122,24 @@ std::vector<type_data_byte> JpDrvLicNfcCommandBase::readBinary_currentFile_speci
     return retVect;
 }
 
+
+bool JpDrvLicNfcCommandBase::executeVerify_DecimalInput(type_PIN pinDecimal){
+    
+    type_PIN pinJisX0201 = {0,0,0,0};
+
+    for(int i = 0; i < 4; i++){
+        if(0 <= pinDecimal[i] && pinDecimal[i] <= 9){
+            //0～9
+            pinJisX0201[i] = intTojisX0201(pinDecimal[i]);
+        }else{
+            //0～9でないデータが入っていた
+            return false;
+        }
+    }
+
+    return executeVerify(pinJisX0201);
+}
+
 /*******************************************************************************/
 /********************************* SELECT FILE *********************************/
 /*******************************************************************************/

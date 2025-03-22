@@ -222,8 +222,6 @@ bool JpDrvLicNfcCommandConventional::executeVerify(type_PIN pin){
     //pinが入っているEFを短縮EF指定してVerify
     bool retVal = false;
 
-    printf("\n\n!!!! 5秒後 従来免許：Verify本番 !!!!\n\n");
-    delay(5000);
     retVal = parseResponseVerify_execute(
         _nfcTransceive(
             assemblyCommandVerify_execute(FULL_FEID_MF_IEF01_PIN1, pin)
