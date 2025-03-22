@@ -36,8 +36,7 @@ extern const uint8_t DRIVER_LIST_NUM;
 void main_settingMode_setup(void);
 void main_settingMode_loop(void);
 
-void sendHTML(WiFiClient, String);
-void send404(WiFiClient);
+void showWebPage(WiFiClient, String);
 void printWiFiStatus(void);
 
 bool verifySecurityNo(uint16_t);

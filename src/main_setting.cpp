@@ -3,7 +3,12 @@
 #define executeReset() digitalWrite(RESET_OUT_PIN, HIGH)
 
 const char* ssid     = SECRET_SSID;  // アクセスポイントのSSID
+
+#ifdef SECRET_PASS
 const char* password = SECRET_PASS;  // パスワード
+#else
+const char* password = "";  // パスワードなし
+#endif
 
 WiFiServer server(80);  // Webサーバーのポート
 
@@ -88,7 +93,7 @@ void main_settingMode_loop(void){
     //リクエストに応じた処理
 
     if (request.indexOf("GET / ") != -1) {
-      sendHTML(client, HTML_HOME);  // ホームページ
+      showWebPage(client, HTML_HOME);  // ホームページ
       printRTCtime();
     }
     else if (request.indexOf("GET /pinsetting") != -1) { //暗証番号ページ
@@ -196,7 +201,7 @@ void main_settingMode_loop(void){
             //プレースホルダメッセージ無し
             html_pinsetting.replace("%MESSAGE%", "");
         }
-        sendHTML(client, html_pinsetting);  // 暗証番号設定ページ表示
+        showWebPage(client, html_pinsetting);  // 暗証番号設定ページ表示
     }
     else if (request.indexOf("GET /calendar") != -1) { //カレンダーページ
       String html_calendar = HTML_CALENDAR;
@@ -252,13 +257,13 @@ void main_settingMode_loop(void){
       html_calendar.replace("%RTC_M%", String(Month2int(currentTime.getMonth())));
       html_calendar.replace("%RTC_D%", String(currentTime.getDayOfMonth()));
 
-      sendHTML(client, html_calendar);  // カレンダー設定ページ表示
+      showWebPage(client, html_calendar);  // カレンダー設定ページ表示
 
     }else if (request.indexOf("GET /endsetting") != -1) { //設定終了ページ
       executeReset = true;
-      sendHTML(client, HTML_ENDSETTING);  // 設定終了ページを表示
+      showWebPage(client, HTML_ENDSETTING);  // 設定終了ページを表示
     }else {
-      sendHTML(client, HTML_HOME);  // ホームページを表示
+      showWebPage(client, HTML_HOME);  // ホームページを表示
     }
     
     client.stop();
@@ -286,7 +291,7 @@ void main_settingMode_loop(void){
 
 
 // HTMLページを送信する関数
-void sendHTML(WiFiClient client, String page) {
+void showWebPage(WiFiClient client, String page) {
     client.println("HTTP/1.1 200 OK");
     client.println("Content-Type: text/html");
     client.println("Connection: close");
@@ -295,19 +300,14 @@ void sendHTML(WiFiClient client, String page) {
 }
   
 void printWiFiStatus() {
-    // print the SSID of the network you're attached to:
     Serial.print("SSID: ");
     Serial.println(WiFi.SSID());
   
-    // print your WiFi shield's IP address:
     IPAddress ip = WiFi.localIP();
-    Serial.print("IP Address: ");
+    Serial.print("設定画面アドレス http://");
     Serial.println(ip);
-  
-    // print where to go in a browser:
-    Serial.print("To see this page in action, open a browser to http://");
-    Serial.println(ip);
-  
+    
+    return;
 }
 
 
