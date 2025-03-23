@@ -30,10 +30,10 @@ JPDLC_ISSET_PIN_STATUS JpDrvLicNfcCommandMynumber::issetPin(void){
     //PIN入っているEFがあるDFをセレクト
     JPDLC_CARD_STATUS card_status = JPDLC_STATUS_ERROR;
 
-    //AID_ELF があるか
+    //AID_INS があるか
     card_status = parseResponseSelectFile(
         _nfcTransceive(
-            assemblyCommandSelectFile_AID(AID_ELF, sizeof(AID_ELF)/sizeof(AID_ELF[0]))
+            assemblyCommandSelectFile_AID(AID_INS, sizeof(AID_INS)/sizeof(AID_INS[0]))
         )
     );
 
@@ -80,28 +80,47 @@ bool JpDrvLicNfcCommandMynumber::isDrvLicCard(void){
     JPDLC_CARD_STATUS card_status = JPDLC_STATUS_ERROR;
 
     //AID_ELF があるか
+
+#ifdef DLC_LAYER_DEBUG
+    printf("isDrvLicCard マイナ免許 AID_ELF を SELECT\r\n");
+#endif
+    
     card_status = parseResponseSelectFile(
         _nfcTransceive(
             assemblyCommandSelectFile_AID(AID_ELF, sizeof(AID_ELF)/sizeof(AID_ELF[0]))
         )
     );
 
+#ifndef DLC_LAYER_DEBUG
     if(card_status == JPDLC_STATUS_ERROR){
         return false;
     }
+#endif
 
     //AID_EXE があるか
+
+#ifdef DLC_LAYER_DEBUG
+    printf("isDrvLicCard マイナ免許 AID_EXE を SELECT\r\n");
+#endif
+
     card_status = parseResponseSelectFile(
         _nfcTransceive(
             assemblyCommandSelectFile_AID(AID_EXE, sizeof(AID_EXE)/sizeof(AID_EXE[0]))
         )
     );
 
+#ifndef DLC_LAYER_DEBUG
     if(card_status == JPDLC_STATUS_ERROR){
         return false;
     }
+#endif
 
     //AID_INS があるか
+
+#ifdef DLC_LAYER_DEBUG
+    printf("isDrvLicCard マイナ免許 AID_INS を SELECT\r\n");
+#endif
+
     card_status = parseResponseSelectFile(
         _nfcTransceive(
             assemblyCommandSelectFile_AID(AID_INS, sizeof(AID_INS)/sizeof(AID_INS[0]))

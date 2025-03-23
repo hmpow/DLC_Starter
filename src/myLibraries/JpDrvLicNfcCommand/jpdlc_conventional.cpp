@@ -296,12 +296,14 @@ uint8_t JpDrvLicNfcCommandConventional::packedBCDtoInt(type_data_byte input){
 
     cardResVect = readBinary_currentFile_specifiedTag(TAG_EXPIRATION_EF01); 
 
-    printf("セキュア領域から読めた有効期限データ；");
-    for (int i = 0; i < cardResVect.size(); i++)
-    {
-        printf("%02X ",cardResVect[i]);
-    }
-    printf("\n");
+    #ifdef DLC_LAYER_DEBUG
+        printf("セキュア領域から読めた有効期限データ；");
+        for (int i = 0; i < cardResVect.size(); i++)
+        {
+            printf("%02X ",cardResVect[i]);
+        }
+        printf("\n");
+    #endif
 
     if(cardResVect.empty() == true){
         return expirationData;
