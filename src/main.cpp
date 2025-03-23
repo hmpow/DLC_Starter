@@ -23,8 +23,8 @@
 #define ENGINE_START_MONITOR_PIN  PORT_A_DEF_ENGINE_START_MONI 
 #define BOOT_MODE_PIN             PORT_A_DEF_BOOT_MODE
 
-#define SHOW_DEBUG true
-#define DEVELOP_MODE true
+#define SHOW_DEBUG false
+#define DEVELOP_MODE false
 
 
 #define TEST_WAIT_HUMAN_READABLE_INTERVAL_MS 25
@@ -278,7 +278,7 @@ void main_normalMode_loop() {
         allowDrive();
         
         //ループ終わり
-        isDriveAllowed = true;
+        isDriveAllowed = true;        
 
     }else{
       if(USE_ATP301X){
@@ -297,6 +297,7 @@ void main_normalMode_loop() {
     }
       
   //有効期限読み上げ
+  delay(1000); //デバッグメッセージ出さないと読み取り速すぎてタッチ音が「ポーン」ではなく「ポッ」って聴こえる
   announceExpirationTime(expirarionData);
 
   //カードリーダの電源OFF
@@ -312,6 +313,7 @@ void main_normalMode_loop() {
 #if DEVELOP_MODE
   atp301x.talk("kannsu-te'_suto kai_shi.");
 
+  //従来免許の場合のテストシーケンス
   if(drvLicCard == &jpdlcConventional){
 
     atp301x.talk("pinnsette-_shuto_kute'_suto.");
