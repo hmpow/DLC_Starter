@@ -23,9 +23,11 @@
 #define ENGINE_START_MONITOR_PIN  PORT_A_DEF_ENGINE_START_MONI 
 #define BOOT_MODE_PIN             PORT_A_DEF_BOOT_MODE
 
+#define SHOW_DEBUG true
+#define DEVELOP_MODE true
+
 
 #define TEST_WAIT_HUMAN_READABLE_INTERVAL_MS 25
-#define SHOW_DEBUG true
 #define EXPIRATION_HOUR_THRESHOLD 12
 
 
@@ -114,9 +116,11 @@ void setup() {
     bootMode = NORMAL;
   }
 
-  delay(10000); //Platform IO がアップロードタスクからシリアルモニタタスクに戻るのを待つ
-  
-  pinEEPROM.debugPrintEEPROM(24);
+  #if DEVELOP_MODE
+    //delay(10000); //Platform IO がアップロードタスクからシリアルモニタタスクに戻るのを待つ
+    Serial.println("EEPROMのデータ");
+    pinEEPROM.debugPrintEEPROM(24);
+  #endif
 
 
   //起動モードに応じて処理切替
@@ -159,10 +163,12 @@ void main_normalMode_setup(void){
 
   setReaderInstance(&rcs660sAppIf); //jpdlc_base_reader_if.h にリーダー渡す
 
-  //アナウンス
-  sprintf(atpbuf,"tsu-jo-mo'-dode/kido-shima'_su.");
-  atp301x.talk(atpbuf,true);
-  Serial.println("通常モード");
+  #if DEVELOP_MODE
+    //アナウンス
+    sprintf(atpbuf,"tsu-jo-mo'-dode/kido-shima'_su.");
+    atp301x.talk(atpbuf,true);
+    Serial.println("通常モード");
+  #endif
 
   return;
 }
@@ -302,75 +308,84 @@ void main_normalMode_loop() {
   /********************************************/
   /************** テストシーケンス **************/
   /********************************************/
-
+  
+#if DEVELOP_MODE
   atp301x.talk("kannsu-te'_suto kai_shi.");
 
-  atp301x.talk("pinnsette-_shuto_kute'_suto.");
-  JPDLC_ISSET_PIN_STATUS pinStatus = jpdlcConventional.issetPin();
-  if(pinStatus == PIN_SET){
-    atp301x.talk("pinnse'tte-/a'ri.");
-  }else if(pinStatus == PIN_NOT_SET){
-    atp301x.talk("pinnse'tte-/na'_shi.");
-  }else{
-    atp301x.talk("pinnsette-kakuninne'ra-.");
-  }
-  atp301x.talk("nokorisho-go-ka'isu-/_shuto_kute'_suto.");
-  uint8_t count = jpdlcConventional.getRemainingCount();
-  sprintf(atpbuf,"nokorisho-go-ka'isu-wa <NUMK VAL=%d COUNTER=ka'i>/de_su.",count);
-  atp301x.talk(atpbuf,true);
+  if(drvLicCard == &jpdlcConventional){
 
-  atp301x.talk("berifa'io/te'_suto+shima'_su.");
-
-  sprintf(atpbuf,"dora'iba-<ALPHA VAL=%d>.",driverNum);
-  atp301x.talk(atpbuf,true); 
-
-  if(pinEEPROM.isSetPin(driverNum - 1)){
-
-    type_EEPROM_PIN pinDecimal = pinEEPROM.getPin(driverNum - 1);
-
-    sprintf(atpbuf,"pinnwa <NUMK VAL=%d > <NUMK VAL=%d > <NUMK VAL=%d > <NUMK VAL=%d >.",
-      pinDecimal[0],pinDecimal[1],pinDecimal[2],pinDecimal[3]);
-    atp301x.talk(atpbuf,true);
-  
-    printf("PIN_decimal_HEX: %02X %02X %02X %02X\n",
-      pinDecimal[0],pinDecimal[1],pinDecimal[2],pinDecimal[3]);
-  
-    atp301x.talk("pi'nnga/hozonnsareteima'_su.");
-
-    for(int i = 5; i >= 0; i--){
-      sprintf(atpbuf,"<NUMK VAL=%d >.",i);
-      atp301x.talk(atpbuf,false);
-      delay(1000);
-    }
-
-    bool isVerified = jpdlcConventional.executeVerify_DecimalInput(pinDecimal);
-
-    if(isVerified){
-      atp301x.talk("berifa'i se-ko-.");
+    atp301x.talk("pinnsette-_shuto_kute'_suto.");
+    JPDLC_ISSET_PIN_STATUS pinStatus = jpdlcConventional.issetPin();
+    if(pinStatus == PIN_SET){
+      atp301x.talk("pinnse'tte-/a'ri.");
+    }else if(pinStatus == PIN_NOT_SET){
+      atp301x.talk("pinnse'tte-/na'_shi.");
     }else{
-      rcs660sAppIf.releaseNfc();
-      while(1){
-        atp301x.talk("berifa'i shippa'i.",true);
-        delay(500);
-      }
+      atp301x.talk("pinnsette-kakuninne'ra-.");
     }
+    atp301x.talk("nokorisho-go-ka'isu-/_shuto_kute'_suto.");
+    uint8_t count = jpdlcConventional.getRemainingCount();
+    sprintf(atpbuf,"nokorisho-go-ka'isu-wa <NUMK VAL=%d COUNTER=ka'i>/de_su.",count);
+    atp301x.talk(atpbuf,true);
 
+    atp301x.talk("berifa'io/te'_suto+shima'_su.");
 
-    //従来・マイナ兼用
-    JPDLC_EXPIRATION_DATA expirarionData = jpdlcConventional.getExpirationData_from_DF1_EF01();
-    if(expirarionData.yyyy != 0){
-      announceExpirationTime(expirarionData);
-    }
+    sprintf(atpbuf,"dora'iba-<ALPHA VAL=%d>.",driverNum);
+    atp301x.talk(atpbuf,true); 
 
-    atp301x.talk("nibaito'renn bunn_kite'_suto.");
-    jpdlcConventional.getSignature_from_DF1_EF07();
+    if(pinEEPROM.isSetPin(driverNum - 1)){
+
+      type_EEPROM_PIN pinDecimal = pinEEPROM.getPin(driverNum - 1);
+
+      sprintf(atpbuf,"pinnwa <NUMK VAL=%d > <NUMK VAL=%d > <NUMK VAL=%d > <NUMK VAL=%d >.",
+        pinDecimal[0],pinDecimal[1],pinDecimal[2],pinDecimal[3]);
+      atp301x.talk(atpbuf,true);
     
+      printf("PIN_decimal_HEX: %02X %02X %02X %02X\n",
+        pinDecimal[0],pinDecimal[1],pinDecimal[2],pinDecimal[3]);
+    
+      atp301x.talk("pi'nnga/hozonnsareteima'_su.");
 
-  }else{
-    atp301x.talk("pi'nnga/hozonnsareteimase'nn.");
-  }
+      for(int i = 5; i >= 0; i--){
+        sprintf(atpbuf,"<NUMK VAL=%d >.",i);
+        atp301x.talk(atpbuf,false);
+        delay(1000);
+      }
+
+      bool isVerified = jpdlcConventional.executeVerify_DecimalInput(pinDecimal);
+
+      if(isVerified){
+        atp301x.talk("berifa'i se-ko-.");
+      }else{
+        rcs660sAppIf.releaseNfc();
+        while(1){
+          atp301x.talk("berifa'i shippa'i.",true);
+          delay(500);
+        }
+      }
+
+
+      //従来・マイナ兼用
+      JPDLC_EXPIRATION_DATA expirarionData = jpdlcConventional.getExpirationData_from_DF1_EF01();
+      if(expirarionData.yyyy != 0){
+        announceExpirationTime(expirarionData);
+      }
+
+      atp301x.talk("nibaito'renn bunn_kite'_suto.");
+      jpdlcConventional.getSignature_from_DF1_EF07();
+      
+
+    }else{
+      atp301x.talk("pi'nnga/hozonnsareteimase'nn.");
+    }
+
+
+  }//従来免許証終わり
 
   atp301x.talk("kannsu-te'_suto shu-ryo-.");
+#endif
+//DEVELOP_MODE終わり
+
 
   rcs660sAppIf.releaseNfc();
 

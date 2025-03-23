@@ -24,7 +24,7 @@ std::vector<type_data_byte> _nfcTransceive(const std::vector<type_data_byte> inp
         command.push_back( (type_data_byte)inputCommand[i] );
     }
 
-#ifdef DLC_LAYER_DEBUG
+#ifdef DLC_LAYER_SHOW_COMMUNICATION_FRAME
     printf("Tx To Card : ");
     for(const auto& comByte : command){
         printf("%02X ",comByte);
@@ -35,7 +35,7 @@ std::vector<type_data_byte> _nfcTransceive(const std::vector<type_data_byte> inp
     std::vector<uint8_t> orgResponse;
     orgResponse = p_rcs660sInstance->communicateNfc(command, comLen);  
 
-#ifdef DLC_LAYER_DEBUG
+#ifdef DLC_LAYER_SHOW_COMMUNICATION_FRAME
     printf("Rx From Card : ");
     for(const auto& comByte : orgResponse){
         printf("%02X ",comByte);
@@ -75,9 +75,6 @@ std::vector<type_data_byte> _nfcTransceive_Stub(const std::vector<type_data_byte
         wrong_P1P2
     };
 
-
-    
-    printf("\r\n");
     printf("Stub_nfcTransceive\r\n");
     printf("\r\n");
     std::vector<type_data_byte> command;
@@ -115,6 +112,7 @@ std::vector<type_data_byte> _nfcTransceive_Stub(const std::vector<type_data_byte
         printf("Stub_Rx From Card : empty Vector");
     }
 
+    printf("\r\n");
     printf("\r\n");
 
     return retResponse;
