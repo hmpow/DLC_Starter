@@ -6,7 +6,7 @@
 #define PORT_A_DEF_ENGINE_START_MONI    D3
 
 //デジタル出力
-#define PORT_A_DEF_START_CTRL_RELAY_OUT D5
+#define PORT_A_DEF_START_CTRL_RELAY_OUT D7
 #define PORT_A_DEF_SELF_RESET_OUT       D14
 
 //ライブラリが使うポート
