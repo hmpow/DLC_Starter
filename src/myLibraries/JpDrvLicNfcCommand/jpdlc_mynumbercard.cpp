@@ -137,8 +137,7 @@ JPDLC_EXPIRATION_DATA JpDrvLicNfcCommandMynumber::getExpirationData(void){
 
     JPDLC_EXPIRATION_DATA expirationData = {0,0,0};
 
-    std::vector<type_data_byte> retVect;
-
+    std::vector<type_data_byte> cardResVect;
 
     //インスタンスAIDをセレクト
     JPDLC_CARD_STATUS card_status = JPDLC_STATUS_ERROR;
@@ -168,39 +167,53 @@ JPDLC_EXPIRATION_DATA JpDrvLicNfcCommandMynumber::getExpirationData(void){
         return expirationData; //0000/00/00
     }
 
+    #ifdef DLC_LAYER_DEBUG
+
     printf("ひとまず200文字くらい読んでみる\r\n");
-
     
-
-    retVect = parseResponseReadBinary(
+    (void)parseResponseReadBinary(
         _nfcTransceive(
             assemblyCommandReadBinary_onlyCurrentEF_OffsetAddr15bit(0,200)
         )
     );
 
-    printf("停止\r\n");
-    while(1);
+    #endif
 
     printf("タグ探し関数に入る\r\n");
 
-    retVect = readBinary_currentFile_specifiedTag(TAG_OF_EXPIRATION_DATA); 
-    if(retVect.empty() == true){
+    cardResVect.clear();
+
+    cardResVect = readBinary_currentFile_specifiedTag(TAG_OF_EXPIRATION_DATA); 
+    
+    #ifdef DLC_LAYER_DEBUG
+        printf("セキュア領域から読めた有効期限データ；");
+        for (int i = 0; i < cardResVect.size(); i++)
+        {
+            printf("%02X ",cardResVect[i]);
+        }
+        printf("\n");
+    #endif
+    
+    if(cardResVect.empty() == true){
+        printf("から\r\n");
         return expirationData;
     }
 
-    if(retVect.size() > 7){
+    if(cardResVect.size() > 7){
+        printf("長さ違う\r\n");
         return expirationData;
     }
 
-    if(retVect[0] != REIWA_CODE){
+    if(jisX0201toInt(cardResVect[0]) != REIWA_CODE){
+        printf("令和じゃない\r\n");
         return expirationData;
     }
 
-    uint16_t exData_reiwa = 10 * jisX0201toInt(retVect[1]) + jisX0201toInt(retVect[2]);
+    uint16_t exData_reiwa = 10 * jisX0201toInt(cardResVect[1]) + jisX0201toInt(cardResVect[2]);
     expirationData.yyyy = _reiwaToYYYY(exData_reiwa);
 
-    expirationData.m = 10 * jisX0201toInt(retVect[3]) + jisX0201toInt(retVect[4]);
-    expirationData.d = 10 * jisX0201toInt(retVect[5]) + jisX0201toInt(retVect[6]);
+    expirationData.m = 10 * jisX0201toInt(cardResVect[3]) + jisX0201toInt(cardResVect[4]);
+    expirationData.d = 10 * jisX0201toInt(cardResVect[5]) + jisX0201toInt(cardResVect[6]);
 
     return expirationData;
 }

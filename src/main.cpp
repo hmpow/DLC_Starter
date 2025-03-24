@@ -474,6 +474,7 @@ void main_normalMode_loop() {
   rcs660sAppIf.releaseNfc();
 
   delay(1000);
+  while(1);
   }  //while終わり
 
 
