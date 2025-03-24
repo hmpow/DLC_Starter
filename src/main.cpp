@@ -23,8 +23,8 @@
 #define ENGINE_START_MONITOR_PIN  PORT_A_DEF_ENGINE_START_MONI 
 #define BOOT_MODE_PIN             PORT_A_DEF_BOOT_MODE
 
-#define SHOW_DEBUG false
-#define DEVELOP_MODE false
+#define SHOW_DEBUG true
+#define DEVELOP_MODE true
 
 
 #define TEST_WAIT_HUMAN_READABLE_INTERVAL_MS 25
@@ -251,6 +251,7 @@ void main_normalMode_loop() {
           Serial.println("免許証ではないためリトライ");
         }
         readError = true;
+        delay(10000);
         continue;
       }else{
         //OK 次STEPへ
