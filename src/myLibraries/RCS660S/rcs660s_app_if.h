@@ -8,8 +8,8 @@
 /* 設定 */
 /********/
 
-#define CATCH_RETRY_INTERVAL_MS 100
-#define BETWEEN_COMMANDS_INTERVAL_MS 50
+#define CATCH_RETRY_INTERVAL_MS 300 //速すぎるとカードリーダが追いつかない
+#define BETWEEN_COMMANDS_INTERVAL_MS 70
 
 //目標：カードとアプリが直接通信しているように見せられる
 //AT車のようなクラス

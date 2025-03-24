@@ -107,7 +107,7 @@ bool Rcs660sAppIf::catchNfc(uint8_t retryCountSetting){
     if(rxStatus == E_NG){
         debugPrintMsg("Rcs660sAppIf::releaseNfc::ERROR! StartTransParetnSession失敗 リセット実行後リトライ");
         resetDevice();
-        uart_wait_ms(BETWEEN_COMMANDS_INTERVAL_MS);
+        uart_wait_ms(1000);
         catchNfc(retryCountSetting); //注意：再帰呼び出し使用
     }
 

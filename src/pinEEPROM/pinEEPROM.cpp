@@ -11,8 +11,6 @@ void PinEEPROM::clearPin(const uint8_t indexNum){
 
 void PinEEPROM::updatePin(const uint8_t indexNum, const type_EEPROM_PIN pin){
 
-    printf("updatePin arrSize: %d\r\n", EEPROM_PIN_LENGTH);
-
     uint16_t startPos = indexNum * EEPROM_PIN_LENGTH;
 
     if(EEPROM_SIZE < startPos + EEPROM_PIN_LENGTH){
@@ -30,11 +28,7 @@ type_EEPROM_PIN PinEEPROM::getPin(const uint8_t indexNum){
     
     type_EEPROM_PIN pin = {EEPROM_UNSET,EEPROM_UNSET,EEPROM_UNSET,EEPROM_UNSET};
     
-    printf("getPin arrSize: %d\r\n", EEPROM_PIN_LENGTH);
-
     uint16_t startPos = indexNum * EEPROM_PIN_LENGTH;
-
-    printf("getPin startPos: %d\r\n", startPos);
 
     if(EEPROM_SIZE < startPos + EEPROM_PIN_LENGTH){
         return pin;
@@ -49,11 +43,7 @@ type_EEPROM_PIN PinEEPROM::getPin(const uint8_t indexNum){
 
 bool PinEEPROM::isSetPin(const uint8_t indexNum){
     
-    printf("isSetPin arrSize: %d\r\n", EEPROM_PIN_LENGTH);
-
     uint16_t startPos = indexNum * EEPROM_PIN_LENGTH;
-
-    printf("getPin startPos: %d\r\n", startPos);
 
     if(EEPROM_SIZE < startPos + EEPROM_PIN_LENGTH){
         return false;

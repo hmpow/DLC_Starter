@@ -24,7 +24,7 @@
 #define BOOT_MODE_PIN             PORT_A_DEF_BOOT_MODE
 
 #define SHOW_DEBUG  false
-#define DEVELOP_MODE true
+#define DEVELOP_MODE false
 
 #define EXPIRATION_HOUR_THRESHOLD      12 //有効期限当日の何時を期限切れとするか
 #define REMAINING_COUNT_ALART_THRESHOLD 10 //残り照合回数が下回ったら警告する閾値
