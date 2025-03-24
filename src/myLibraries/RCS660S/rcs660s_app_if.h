@@ -8,7 +8,7 @@
 /* 設定 */
 /********/
 
-#define CATCH_RETRY_INTERVAL_MS 5000
+#define CATCH_RETRY_INTERVAL_MS 100
 #define BETWEEN_COMMANDS_INTERVAL_MS 50
 
 //目標：カードとアプリが直接通信しているように見せられる

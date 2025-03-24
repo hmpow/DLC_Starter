@@ -29,6 +29,7 @@
 
 #define TEST_WAIT_HUMAN_READABLE_INTERVAL_MS 25
 #define EXPIRATION_HOUR_THRESHOLD 12
+#define REMAINING_COUNT_ALART_THRESHOLD 8 //残り照合回数が下回ったら警告する閾値
 
 
 
@@ -52,10 +53,15 @@ void disallowDrive();
 //void audioOn();
 //void audioOff();
 
+//単発アナウンス
 void announcePleaseTouch();
 void announcePleaseRetry();
 void announceExpirationTime(JPDLC_EXPIRATION_DATA);
 void announceCurrentTime();
+void announcePleaseSavePinOrCheckDriverSelect();
+
+void announceCheckPin();
+void announceResetRemainingCount();
 
 bool isEfectiveLicenseCard(JPDLC_EXPIRATION_DATA);
 
@@ -210,8 +216,6 @@ void main_normalMode_loop() {
      //STEP1：NFC Type-Bをポーリング
 
      rcs660sAppIf.setNfcType(NFC_TYPE_B);
-     //従来マイナ共に、ATQBまではOK
-
      rcs660sAppIf.updateTxAndRxFlag({false, false, 3, false});//従来免許はこれで読めるがマイナ免許は応答がない→マイナ免許もこれでいけた　タイムアウト短すぎた
      bool isCatch = rcs660sAppIf.catchNfc(RETRY_CATCH_INFINITE);
 
@@ -233,7 +237,9 @@ void main_normalMode_loop() {
 
     //STEP2 仕様で規定された3つのAIDが存在するかチェック
 
-    printf("\r\n\r\n =============カードアクセスシーケンス開始============== \r\n\r\r");
+    if(SHOW_DEBUG){
+      printf("\r\n\r\n =============カードアクセスシーケンス開始============== \r\n\r\r");
+    }
 
     //選択された免許種別でダメだったら切り替えてリトライ
     if(!drvLicCard->isDrvLicCard()){
@@ -272,26 +278,42 @@ void main_normalMode_loop() {
       
       //PIN設定有無確認
       uint8_t isSetPinMyum = drvLicCard->issetPin();
-
       printf("PIN設定有無：%d\r\n", isSetPinMyum);
       
-
-
-      //残り照合回数確認
-      uint8_t mynumcount = drvLicCard->getRemainingCount();
-
-      printf("残り照合回数：%d\r\n", mynumcount);
 
       //Verify実行
 
       if(isSetPinMyum){
- 
-        if(pinEEPROM.isSetPin(driverNum - 1)){
+        //独自のPINが設定されている
 
+        if(!pinEEPROM.isSetPin(driverNum - 1)){
+          //EEPROMにPIN設定がない場合
+          if(SHOW_DEBUG){
+            printf("EEPROMにPIN設定が保存されていない\r\n");
+          }
+          announcePleaseSavePinOrCheckDriverSelect();
+          
+          continue;
+        }
+
+        if(SHOW_DEBUG){
           printf("EEPROMにPIN設定あり\r\n");
+        }
+ 
+        //残り照合回数確認
+        uint8_t mynumcount = drvLicCard->getRemainingCount();
+        printf("残り照合回数：%d\r\n", mynumcount);
 
-          type_EEPROM_PIN pinDecimal = pinEEPROM.getPin(driverNum - 1);
+        if(mynumcount < REMAINING_COUNT_ALART_THRESHOLD){
+          //【無限ループ】残り回数が少ないアナウンス
+          while(1){
+            announceResetRemainingCount();
+          }
+        }
+
+        type_EEPROM_PIN pinDecimal = pinEEPROM.getPin(driverNum - 1);
     
+        if(DEVELOP_MODE){
           sprintf(atpbuf,"pinnwa <NUMK VAL=%d > <NUMK VAL=%d > <NUMK VAL=%d > <NUMK VAL=%d >.",
             pinDecimal[0],pinDecimal[1],pinDecimal[2],pinDecimal[3]);
           atp301x.talk(atpbuf,true);
@@ -307,35 +329,40 @@ void main_normalMode_loop() {
             atp301x.talk(atpbuf,false);
             delay(1000);
           }
+        }
     
-          bool isVerified = drvLicCard->executeVerify_DecimalInput(pinDecimal);
+        bool isVerified = drvLicCard->executeVerify_DecimalInput(pinDecimal);
     
-          if(isVerified){
+        if(isVerified){
+          if(DEVELOP_MODE){
             atp301x.talk("berifa'i se-ko-.");
             printf("PIN照合成功\r\n");
-          }else{
-            rcs660sAppIf.releaseNfc();
-            while(1){
-              atp301x.talk("berifa'i shippa'i.",true);
-              printf("PIN照合失敗\r\n");
-              delay(500);
-            }
-          }    
-    
+          }
         }else{
-          atp301x.talk("pi'nnga/hozonnsareteimase'nn.");
+          rcs660sAppIf.releaseNfc();
+          
+          //【無限ループ】暗証番号間違いアナウンス
+          while(1){
+            announceCheckPin();
+          }    
         }
-      }else{
-        printf("PIN未設定のためDPINで照合\r\n");
 
-        type_EEPROM_PIN pinDecimal = pinEEPROM.getPin(driverNum - 1);
-        type_PIN pinDpin = {DPIN,DPIN,DPIN,DPIN};
-        for(int i = 5; i >= 0; i--){
-          printf("PIN照合待機：%d秒\r\n",i);
-          sprintf(atpbuf,"<NUMK VAL=%d >.",i);
-          atp301x.talk(atpbuf,false);
-          delay(1000);
+      }else{
+        //独自のPINが保存されていない
+        if(SHOW_DEBUG){
+          printf("PIN未設定のためDPINで照合\r\n");
         }
+
+        type_PIN pinDpin = {DPIN,DPIN,DPIN,DPIN};
+        if(DEVELOP_MODE){
+          for(int i = 5; i >= 0; i--){
+            printf("PIN照合待機：%d秒\r\n",i);
+            sprintf(atpbuf,"<NUMK VAL=%d >.",i);
+            atp301x.talk(atpbuf,false);
+            delay(1000);
+          }
+        }
+
         bool isVerified = drvLicCard->executeVerify(pinDpin);
       }
 
@@ -359,7 +386,7 @@ void main_normalMode_loop() {
         allowDrive();
         
         //ループ終わり
-        isDriveAllowed = true;        
+        isDriveAllowed = true;
 
     }else{
       if(USE_ATP301X){
@@ -369,11 +396,10 @@ void main_normalMode_loop() {
         delay(200);
         atp301x.chimeK(false);
         delay(200);
-      }
-      if(USE_ATP301X){
-          //音声合成「有効期限 または 設定をご確認ください」
-          atp301x.talk("yu-ko-ki'genn mata'wa sette-o gokakuninnkudasa'i.");
-          announceCurrentTime();    
+      
+        //音声合成「有効期限 または 設定をご確認ください」
+        atp301x.talk("yu-ko-ki'genn mata'wa sette-o gokakuninnkudasa'i.");
+        announceCurrentTime();    
       }
     }
       
@@ -471,13 +497,17 @@ void main_normalMode_loop() {
 //DEVELOP_MODE終わり
 
 
-  rcs660sAppIf.releaseNfc();
+    rcs660sAppIf.releaseNfc();
 
-  delay(1000);
-  while(1);
+    delay(1000);
   }  //while終わり
 
+  while(1){
+    //ここへ来るのはエンジンがかかって走行中
+    // 無限ループで止めておく 将来的にはマイコンスリープにしたい
+  }
 
+  return;
 }//main終わり
 
 /****************************************************************************/
@@ -572,7 +602,41 @@ void announceExpirationTime(JPDLC_EXPIRATION_DATA exData){
   return;
 }
 
+void announcePleaseSavePinOrCheckDriverSelect(){
+  if(USE_ATP301X){
+    //音声合成「設定モードから暗証番号するか、登録済みドライバーを選択してください」
+    atp301x.talk("a'nsho-ba'nngo-o/se'teisuru'ka, dora'iba-banngo-o ka'kuninne'kudasai.",true);
+    
+    //「現在のドライバー選択はXXです」
+  }
+  return;
+}
 
+
+//無限ループアナウンス：暗証番号照合失敗
+void announceCheckPin(){
+    if(USE_ATP301X){
+      //音声合成「暗証番号が間違っています。カード保護のため動作を停止しました。暗証番号とドライバー選択を確認してください。」
+      atp301x.talk("a'nsho-ba'nngo-o/go'kakuninne'kudasai.",true);
+      //音声合成「現在のドライバー選択は　__　です。」
+
+
+      //音声合成「リセットボタンまたは電源入れ直しで再起動します。」
+
+    }
+  return;
+}
+
+//無限ループアナウンス：残り照合回数が少ない
+void announceResetRemainingCount(){
+  if(USE_ATP301X){
+      //音声合成「残り照合回数が少なくなっています。カード保護のため動作を停止しました。」
+      atp301x.talk("nokorisho-go-ka'isu-ga/sukunakunatteimasu.",true);
+      //音声合成「公式のマイナ免許読み取りアプリで正しい暗証番号で照合し、残り照合回数をリセットしてください。」
+      //音声合成「リセットボタンまたは電源入れ直しで再起動します。」
+  }
+  return;
+}
 
 
 
