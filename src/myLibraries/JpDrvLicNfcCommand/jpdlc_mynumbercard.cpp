@@ -195,10 +195,10 @@ bool JpDrvLicNfcCommandMynumber::executeVerify(type_PIN pin){
     //PIN入っているEFがあるDFをセレクト
     JPDLC_CARD_STATUS card_status = JPDLC_STATUS_ERROR;
 
-    //AID_ELF があるか
+    //AID_INS があるか
     card_status = parseResponseSelectFile(
         _nfcTransceive(
-            assemblyCommandSelectFile_AID(AID_ELF, sizeof(AID_ELF)/sizeof(AID_ELF[0]))
+            assemblyCommandSelectFile_AID(AID_INS, sizeof(AID_INS)/sizeof(AID_INS[0]))
         )
     );
 

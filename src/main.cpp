@@ -271,15 +271,89 @@ void main_normalMode_loop() {
       printf("PIN設定有無の確認\r\n");
       
       //PIN設定有無確認
-      bool isSetPinMyum = drvLicCard->issetPin();
+      uint8_t isSetPinMyum = drvLicCard->issetPin();
+
+      printf("PIN設定有無：%d\r\n", isSetPinMyum);
+      
 
 
       //残り照合回数確認
       uint8_t mynumcount = drvLicCard->getRemainingCount();
 
-
+      printf("残り照合回数：%d\r\n", mynumcount);
 
       //Verify実行
+
+      if(isSetPinMyum){
+ 
+        if(pinEEPROM.isSetPin(driverNum - 1)){
+
+          printf("EEPROMにPIN設定あり\r\n");
+
+          type_EEPROM_PIN pinDecimal = pinEEPROM.getPin(driverNum - 1);
+    
+          sprintf(atpbuf,"pinnwa <NUMK VAL=%d > <NUMK VAL=%d > <NUMK VAL=%d > <NUMK VAL=%d >.",
+            pinDecimal[0],pinDecimal[1],pinDecimal[2],pinDecimal[3]);
+          atp301x.talk(atpbuf,true);
+        
+          printf("PIN_decimal_HEX: %02X %02X %02X %02X\n",
+            pinDecimal[0],pinDecimal[1],pinDecimal[2],pinDecimal[3]);
+        
+          atp301x.talk("pi'nnga/hozonnsareteima'_su.");
+    
+          for(int i = 5; i >= 0; i--){
+            printf("PIN照合待機：%d秒\r\n",i);
+            sprintf(atpbuf,"<NUMK VAL=%d >.",i);
+            atp301x.talk(atpbuf,false);
+            delay(1000);
+          }
+    
+          bool isVerified = drvLicCard->executeVerify_DecimalInput(pinDecimal);
+    
+          if(isVerified){
+            atp301x.talk("berifa'i se-ko-.");
+            printf("PIN照合成功\r\n");
+          }else{
+            rcs660sAppIf.releaseNfc();
+            while(1){
+              atp301x.talk("berifa'i shippa'i.",true);
+              printf("PIN照合失敗\r\n");
+              delay(500);
+            }
+          }
+    
+
+          /*
+    
+          //従来・マイナ兼用
+          JPDLC_EXPIRATION_DATA expirarionData = jpdlcConventional.getExpirationData_from_DF1_EF01();
+          if(expirarionData.yyyy != 0){
+            announceExpirationTime(expirarionData);
+          }
+    
+          atp301x.talk("nibaito'renn bunn_kite'_suto.");
+          jpdlcConventional.getSignature_from_DF1_EF07();
+
+          */
+          
+    
+        }else{
+          atp301x.talk("pi'nnga/hozonnsareteimase'nn.");
+        }
+      }else{
+        printf("PIN未設定のためDPINで照合\r\n");
+
+        type_EEPROM_PIN pinDecimal = pinEEPROM.getPin(driverNum - 1);
+        type_PIN pinDpin = {DPIN,DPIN,DPIN,DPIN};
+        for(int i = 5; i >= 0; i--){
+          printf("PIN照合待機：%d秒\r\n",i);
+          sprintf(atpbuf,"<NUMK VAL=%d >.",i);
+          atp301x.talk(atpbuf,false);
+          delay(1000);
+        }
+        bool isVerified = drvLicCard->executeVerify(pinDpin);
+      }
+
     }
 
 
