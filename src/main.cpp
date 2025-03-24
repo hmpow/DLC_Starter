@@ -271,12 +271,16 @@ void main_normalMode_loop() {
 
     //マイナンバーの場合のみ 暗証番号照合
     if(drvLicCard == &jpdlcMyNumberCard){
-      printf("マイナンバーモード\r\n");
-      printf("PIN設定有無の確認\r\n");
+      if(SHOW_DEBUG){
+        printf("マイナンバーモード\r\n");
+        printf("PIN設定有無の確認\r\n");
+      }
       
       //PIN設定有無確認
       uint8_t isSetPinMyum = drvLicCard->issetPin();
-      printf("PIN設定有無：%d\r\n", isSetPinMyum);
+      if(SHOW_DEBUG){
+        printf("PIN設定有無：%d\r\n", isSetPinMyum);
+      }
       
 
       //Verify実行
@@ -300,7 +304,9 @@ void main_normalMode_loop() {
  
         //残り照合回数確認
         uint8_t mynumcount = drvLicCard->getRemainingCount();
-        printf("残り照合回数：%d\r\n", mynumcount);
+        if(SHOW_DEBUG){
+          printf("残り照合回数：%d\r\n", mynumcount);
+        }
 
         if(mynumcount < REMAINING_COUNT_ALART_THRESHOLD){
           //【無限ループ】残り回数が少ないアナウンス

@@ -3,7 +3,7 @@
 
 /* デバッグモード設定 */
 //#define DLC_LAYER_DEBUG
-#define DLC_LAYER_SHOW_COMMUNICATION_FRAME
+//#define DLC_LAYER_SHOW_COMMUNICATION_FRAME
 
 #include <vector>
 #include <array>
