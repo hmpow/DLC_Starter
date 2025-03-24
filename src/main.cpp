@@ -213,22 +213,6 @@ void main_normalMode_loop() {
      //従来マイナ共に、ATQBまではOK
 
      rcs660sAppIf.updateTxAndRxFlag({false, false, 3, false});//従来免許はこれで読めるがマイナ免許は応答がない→マイナ免許もこれでいけた　タイムアウト短すぎた
-
-    //rcs660sAppIf.updateTxAndRxFlag({true, false, 3, false});//Excel テスト1
-    //rcs660sAppIf.updateTxAndRxFlag({false, false, 3, true});//Excel テスト2
-    //rcs660sAppIf.updateTxAndRxFlag({true, false, 0, false});//Excel テスト3
-    //rcs660sAppIf.updateTxAndRxFlag({false, false, 0, true});//Excel テスト4
-    //rcs660sAppIf.updateTxAndRxFlag({true, false, 0, true});//Excel テスト5
-    //rcs660sAppIf.updateTxAndRxFlag({false, false, 0, false});//Excel テスト6
-
-    /*
-        debugPrintHex(tx_and_rx_flag.txDoNotAppendCRC);
-        debugPrintHex(tx_and_rx_flag.rxDoNotDiscardCRC);
-        debugPrintHex(tx_and_rx_flag.transceiveParity);
-        debugPrintHex(tx_and_rx_flag.doNotAppendOrDiscardProcolProloge);
-    */
-
-
      bool isCatch = rcs660sAppIf.catchNfc(RETRY_CATCH_INFINITE);
 
      /* catchNFCは無限ループに設定しているため捕捉できるまで抜けてこない */
@@ -291,6 +275,9 @@ void main_normalMode_loop() {
 
 
       //残り照合回数確認
+      uint8_t mynumcount = drvLicCard->getRemainingCount();
+
+
 
       //Verify実行
     }

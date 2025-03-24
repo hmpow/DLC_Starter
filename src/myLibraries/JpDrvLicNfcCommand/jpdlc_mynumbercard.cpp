@@ -8,8 +8,12 @@ const type_data_byte AID_ELF[] = { 0xA0,0x00,0x00,0x02,0x31,0x04,0x00,0x00,0x00,
 const type_data_byte AID_EXE[] = { 0xA0,0x00,0x00,0x02,0x31,0x05,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00 };
 const type_data_byte AID_INS[] = { 0xA0,0x00,0x00,0x02,0x31,0x06,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00 };
 
-const type_full_efid FULL_FEID_WEF01_PINSETTING   = 0x001A; //PIN設定
-const type_full_efid FULL_FEID_IEF01_PIN          = 0x0006; //PIN1
+const type_full_efid FULL_FEID_WEF01_PINSETTING   = 0x001A; //PIN設定有無
+
+const type_full_efid FULL_FEID_IEF01_PIN          = 0x0006; //PIN1の短縮EF 別紙3記載　⇒ こちらが正 63 CA (残り10回)が返ってくる
+
+//const type_full_efid FULL_FEID_IEF01_PIN_BETTEN   = 0x0002; //PIN1の短縮EF 別添3-1記載　⇒ 誤記っぽい 6A 82 (アクセス対象ファイル無し)が返ってくる
+
 const type_full_efid FULL_FEID_WEF02_LICENSEDATA  = 0x001B; //免許情報
 const type_full_efid FULL_FEID_WEF03_SECURITYDATA = 0x001C; //電子署名や発行者識別情報など　使用しない
 
@@ -74,6 +78,7 @@ JPDLC_ISSET_PIN_STATUS JpDrvLicNfcCommandMynumber::issetPin(void){
 
     return PIN_ERROR;
 }
+
 
 bool JpDrvLicNfcCommandMynumber::isDrvLicCard(void){
 
@@ -161,10 +166,10 @@ uint8_t JpDrvLicNfcCommandMynumber::getRemainingCount(void){
     //PIN入っているEFがあるDFをセレクト
     JPDLC_CARD_STATUS card_status = JPDLC_STATUS_ERROR;
 
-    //AID_ELF があるか
+    //AID_INS があるか
     card_status = parseResponseSelectFile(
         _nfcTransceive(
-            assemblyCommandSelectFile_AID(AID_ELF, sizeof(AID_ELF)/sizeof(AID_ELF[0]))
+            assemblyCommandSelectFile_AID(AID_INS, sizeof(AID_INS)/sizeof(AID_INS[0]))
         )
     );
 
