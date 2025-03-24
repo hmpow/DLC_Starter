@@ -79,11 +79,13 @@ bool JpDrvLicNfcCommandMynumber::isDrvLicCard(void){
 
     JPDLC_CARD_STATUS card_status = JPDLC_STATUS_ERROR;
 
-    //AID_ELF があるか
+    #ifdef DLC_LAYER_DEBUG
 
-#ifdef DLC_LAYER_DEBUG
+    //AID_ELF があるか → 6a 82 になる デバッグのため残しておくが判定から除外
+
+
     printf("isDrvLicCard マイナ免許 AID_ELF を SELECT\r\n");
-#endif
+
     
     card_status = parseResponseSelectFile(
         _nfcTransceive(
@@ -91,17 +93,11 @@ bool JpDrvLicNfcCommandMynumber::isDrvLicCard(void){
         )
     );
 
-#ifndef DLC_LAYER_DEBUG
-    if(card_status == JPDLC_STATUS_ERROR){
-        return false;
-    }
-#endif
+    //AID_EXE があるか → 6a 82 になる デバッグのため残しておくが判定から除外
 
-    //AID_EXE があるか
 
-#ifdef DLC_LAYER_DEBUG
     printf("isDrvLicCard マイナ免許 AID_EXE を SELECT\r\n");
-#endif
+
 
     card_status = parseResponseSelectFile(
         _nfcTransceive(
@@ -109,13 +105,10 @@ bool JpDrvLicNfcCommandMynumber::isDrvLicCard(void){
         )
     );
 
-#ifndef DLC_LAYER_DEBUG
-    if(card_status == JPDLC_STATUS_ERROR){
-        return false;
-    }
-#endif
+    #endif
 
-    //AID_INS があるか
+
+    //AID_INS があるか → 90 00 になる
 
 #ifdef DLC_LAYER_DEBUG
     printf("isDrvLicCard マイナ免許 AID_INS を SELECT\r\n");

@@ -212,7 +212,7 @@ void main_normalMode_loop() {
      rcs660sAppIf.setNfcType(NFC_TYPE_B);
      //従来マイナ共に、ATQBまではOK
 
-     rcs660sAppIf.updateTxAndRxFlag({false, false, 3, false});//従来免許はこれで読めるがマイナ免許は応答がない
+     rcs660sAppIf.updateTxAndRxFlag({false, false, 3, false});//従来免許はこれで読めるがマイナ免許は応答がない→マイナ免許もこれでいけた　タイムアウト短すぎた
 
     //rcs660sAppIf.updateTxAndRxFlag({true, false, 3, false});//Excel テスト1
     //rcs660sAppIf.updateTxAndRxFlag({false, false, 3, true});//Excel テスト2
@@ -254,11 +254,6 @@ void main_normalMode_loop() {
     //選択された免許種別でダメだったら切り替えてリトライ
     if(!drvLicCard->isDrvLicCard()){
 
-
-      printf("\r\n\r\n ===================ここまでで停止==================== \r\n\r\r");
-      while(1);//停止
-
-
       if(drvLicCard == &jpdlcMyNumberCard){
         drvLicCard = &jpdlcConventional;  //マイナ免許証でない場合は従来免許証に切り替え
         if(SHOW_DEBUG){
@@ -286,16 +281,30 @@ void main_normalMode_loop() {
       //OK 次STEPへ
     }
 
+    //マイナンバーの場合のみ 暗証番号照合
+    if(drvLicCard == &jpdlcMyNumberCard){
+      printf("マイナンバーモード\r\n");
+      printf("PIN設定有無の確認\r\n");
+      
+      //PIN設定有無確認
+      bool isSetPinMyum = drvLicCard->issetPin();
+
+
+      //残り照合回数確認
+
+      //Verify実行
+    }
+
+
+
+
+
+
     printf("\r\n\r\n ===================ここまでで停止==================== \r\n\r\r");
     while(1);//停止
 
     //STEP3 有効期限チェック
 
-    //マイナンバーの場合のみ 暗証番号照合
-    if(drvLicCard == &jpdlcMyNumberCard){
-      //残り照合回数確認
-      //Verify実行
-    }
 
     //従来・マイナ兼用
     JPDLC_EXPIRATION_DATA expirarionData = drvLicCard->getExpirationData();
