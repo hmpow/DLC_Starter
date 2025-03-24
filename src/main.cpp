@@ -210,7 +210,25 @@ void main_normalMode_loop() {
      //STEP1：NFC Type-Bをポーリング
 
      rcs660sAppIf.setNfcType(NFC_TYPE_B);
-     rcs660sAppIf.updateTxAndRxFlag({false, false, 3, false});
+     //従来マイナ共に、ATQBまではOK
+
+     rcs660sAppIf.updateTxAndRxFlag({false, false, 3, false});//従来免許はこれで読めるがマイナ免許は応答がない
+
+    //rcs660sAppIf.updateTxAndRxFlag({true, false, 3, false});//Excel テスト1
+    //rcs660sAppIf.updateTxAndRxFlag({false, false, 3, true});//Excel テスト2
+    //rcs660sAppIf.updateTxAndRxFlag({true, false, 0, false});//Excel テスト3
+    //rcs660sAppIf.updateTxAndRxFlag({false, false, 0, true});//Excel テスト4
+    //rcs660sAppIf.updateTxAndRxFlag({true, false, 0, true});//Excel テスト5
+    //rcs660sAppIf.updateTxAndRxFlag({false, false, 0, false});//Excel テスト6
+
+    /*
+        debugPrintHex(tx_and_rx_flag.txDoNotAppendCRC);
+        debugPrintHex(tx_and_rx_flag.rxDoNotDiscardCRC);
+        debugPrintHex(tx_and_rx_flag.transceiveParity);
+        debugPrintHex(tx_and_rx_flag.doNotAppendOrDiscardProcolProloge);
+    */
+
+
      bool isCatch = rcs660sAppIf.catchNfc(RETRY_CATCH_INFINITE);
 
      /* catchNFCは無限ループに設定しているため捕捉できるまで抜けてこない */
@@ -231,8 +249,16 @@ void main_normalMode_loop() {
 
     //STEP2 仕様で規定された3つのAIDが存在するかチェック
 
+    printf("\r\n\r\n =============カードアクセスシーケンス開始============== \r\n\r\r");
+
     //選択された免許種別でダメだったら切り替えてリトライ
     if(!drvLicCard->isDrvLicCard()){
+
+
+      printf("\r\n\r\n ===================ここまでで停止==================== \r\n\r\r");
+      while(1);//停止
+
+
       if(drvLicCard == &jpdlcMyNumberCard){
         drvLicCard = &jpdlcConventional;  //マイナ免許証でない場合は従来免許証に切り替え
         if(SHOW_DEBUG){
@@ -259,6 +285,9 @@ void main_normalMode_loop() {
     }else{
       //OK 次STEPへ
     }
+
+    printf("\r\n\r\n ===================ここまでで停止==================== \r\n\r\r");
+    while(1);//停止
 
     //STEP3 有効期限チェック
 
@@ -310,7 +339,7 @@ void main_normalMode_loop() {
   /********************************************/
   /************** テストシーケンス **************/
   /********************************************/
-  
+#if 0
 #if DEVELOP_MODE
   atp301x.talk("kannsu-te'_suto kai_shi.");
 
@@ -386,6 +415,7 @@ void main_normalMode_loop() {
   }//従来免許証終わり
 
   atp301x.talk("kannsu-te'_suto shu-ryo-.");
+#endif
 #endif
 //DEVELOP_MODE終わり
 

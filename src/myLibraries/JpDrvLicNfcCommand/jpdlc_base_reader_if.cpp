@@ -1,5 +1,7 @@
 #include "jpdlc_base_reader_if.h"
 
+const uint16_t READER_TIMEOUT_MS = 200; //マイナ免許証は長めにしないとダメ
+
 //カードリーダのインスタンスはmain.cppの持ち物なのでポインタで
 Rcs660sAppIf *p_rcs660sInstance;
 
@@ -33,7 +35,7 @@ std::vector<type_data_byte> _nfcTransceive(const std::vector<type_data_byte> inp
 #endif
 
     std::vector<uint8_t> orgResponse;
-    orgResponse = p_rcs660sInstance->communicateNfc(command, comLen);  
+    orgResponse = p_rcs660sInstance->communicateNfc(command, READER_TIMEOUT_MS);  
 
 #ifdef DLC_LAYER_SHOW_COMMUNICATION_FRAME
     printf("Rx From Card : ");
