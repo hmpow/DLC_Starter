@@ -142,8 +142,9 @@ JPDLC_EXPIRATION_DATA JpDrvLicNfcCommandMynumber::getExpirationData(void){
     //インスタンスAIDをセレクト
     JPDLC_CARD_STATUS card_status = JPDLC_STATUS_ERROR;
 
-    //READ BINARY が 69 82 利用権限なしになるので仕様書流れ図にしたがって消してみる 
-    #if 0
+    //マイナ免許はここに来る前に必ずVerify時にインスタンスAID一択で選択されているはずなので不要
+    //仕様書流れずにも再選択は記載なし
+#if 0
     //AID_INS があるか
     card_status = parseResponseSelectFile(
         _nfcTransceive(
@@ -153,10 +154,12 @@ JPDLC_EXPIRATION_DATA JpDrvLicNfcCommandMynumber::getExpirationData(void){
     if(card_status == JPDLC_STATUS_ERROR){
         return expirationData; //0000/00/00
     }
-    #endif
+#endif
     
     //WEF02 免許情報のEF を選択
-    printf("WEF02 免許情報のEF を選択\r\n");
+    #ifdef DLC_LAYER_DEBUG
+        printf("WEF02 免許情報のEF を選択\r\n");
+    #endif
     card_status = parseResponseSelectFile(
         _nfcTransceive(
             assemblyCommandSelectFile_fullEfId(FULL_FEID_WEF02_LICENSEDATA)
@@ -179,8 +182,6 @@ JPDLC_EXPIRATION_DATA JpDrvLicNfcCommandMynumber::getExpirationData(void){
 
     #endif
 
-    printf("タグ探し関数に入る\r\n");
-
     cardResVect.clear();
 
     cardResVect = readBinary_currentFile_specifiedTag(TAG_OF_EXPIRATION_DATA); 
@@ -195,17 +196,14 @@ JPDLC_EXPIRATION_DATA JpDrvLicNfcCommandMynumber::getExpirationData(void){
     #endif
     
     if(cardResVect.empty() == true){
-        printf("から\r\n");
         return expirationData;
     }
 
     if(cardResVect.size() > 7){
-        printf("長さ違う\r\n");
         return expirationData;
     }
 
     if(jisX0201toInt(cardResVect[0]) != REIWA_CODE){
-        printf("令和じゃない\r\n");
         return expirationData;
     }
 

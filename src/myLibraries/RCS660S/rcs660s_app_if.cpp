@@ -118,7 +118,9 @@ bool Rcs660sAppIf::catchNfc(uint8_t retryCountSetting){
 
     do{
         if(tryCounter > 0){
-            debugPrintMsg("Rcs660sAppIf::catchNfc::リトライ中");
+            #ifdef APP_IF_LAYER_DEBUG
+                debugPrintMsg("Rcs660sAppIf::catchNfc::リトライ中");
+            #endif
             uart_wait_ms(CATCH_RETRY_INTERVAL_MS);
         }
 
