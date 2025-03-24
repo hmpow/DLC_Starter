@@ -320,22 +320,7 @@ void main_normalMode_loop() {
               printf("PIN照合失敗\r\n");
               delay(500);
             }
-          }
-    
-
-          /*
-    
-          //従来・マイナ兼用
-          JPDLC_EXPIRATION_DATA expirarionData = jpdlcConventional.getExpirationData_from_DF1_EF01();
-          if(expirarionData.yyyy != 0){
-            announceExpirationTime(expirarionData);
-          }
-    
-          atp301x.talk("nibaito'renn bunn_kite'_suto.");
-          jpdlcConventional.getSignature_from_DF1_EF07();
-
-          */
-          
+          }    
     
         }else{
           atp301x.talk("pi'nnga/hozonnsareteimase'nn.");
@@ -354,15 +339,11 @@ void main_normalMode_loop() {
         bool isVerified = drvLicCard->executeVerify(pinDpin);
       }
 
-    }
+    }//マイナンバーの場合のみシーケンス終了
 
 
-
-
-
-
-    printf("\r\n\r\n ===================ここまでで停止==================== \r\n\r\r");
-    while(1);//停止
+    //ベリファイ失敗時は「ご確認ください」アナウンス無限ループに入るため有効期限確認には来ない
+    //有効期限読み出し入る段階でベリファイ成功している前提でよい
 
     //STEP3 有効期限チェック
 

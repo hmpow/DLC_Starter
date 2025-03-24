@@ -139,6 +139,50 @@ JPDLC_EXPIRATION_DATA JpDrvLicNfcCommandMynumber::getExpirationData(void){
 
     std::vector<type_data_byte> retVect;
 
+
+    //インスタンスAIDをセレクト
+    JPDLC_CARD_STATUS card_status = JPDLC_STATUS_ERROR;
+
+    //READ BINARY が 69 82 利用権限なしになるので仕様書流れ図にしたがって消してみる 
+    #if 0
+    //AID_INS があるか
+    card_status = parseResponseSelectFile(
+        _nfcTransceive(
+            assemblyCommandSelectFile_AID(AID_INS, sizeof(AID_INS)/sizeof(AID_INS[0]))
+        )
+    );
+    if(card_status == JPDLC_STATUS_ERROR){
+        return expirationData; //0000/00/00
+    }
+    #endif
+    
+    //WEF02 免許情報のEF を選択
+    printf("WEF02 免許情報のEF を選択\r\n");
+    card_status = parseResponseSelectFile(
+        _nfcTransceive(
+            assemblyCommandSelectFile_fullEfId(FULL_FEID_WEF02_LICENSEDATA)
+        )
+    );
+    
+    if(card_status == JPDLC_STATUS_ERROR){
+        return expirationData; //0000/00/00
+    }
+
+    printf("ひとまず200文字くらい読んでみる\r\n");
+
+    
+
+    retVect = parseResponseReadBinary(
+        _nfcTransceive(
+            assemblyCommandReadBinary_onlyCurrentEF_OffsetAddr15bit(0,200)
+        )
+    );
+
+    printf("停止\r\n");
+    while(1);
+
+    printf("タグ探し関数に入る\r\n");
+
     retVect = readBinary_currentFile_specifiedTag(TAG_OF_EXPIRATION_DATA); 
     if(retVect.empty() == true){
         return expirationData;
@@ -206,14 +250,12 @@ bool JpDrvLicNfcCommandMynumber::executeVerify(type_PIN pin){
         return false;
     }
 
-    //pinが入っているEFを短縮EF指定してVerify
     bool retVal = false;
 
     retVal = parseResponseVerify_execute(
-        _nfcTransceive_Stub(
+        _nfcTransceive(
             assemblyCommandVerify_execute(FULL_FEID_IEF01_PIN, pin)
         )
     );
-
     return retVal;
 }

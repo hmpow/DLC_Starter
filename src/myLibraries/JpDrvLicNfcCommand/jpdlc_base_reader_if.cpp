@@ -77,7 +77,7 @@ std::vector<type_data_byte> _nfcTransceive_Stub(const std::vector<type_data_byte
         wrong_P1P2
     };
 
-    printf("Stub_nfcTransceive\r\n");
+    printf("\r\n\r\n\r\n\r\n\r\nStub_nfcTransceive\r\n\r\n\r\n\r\n\r\n\r\n");
     printf("\r\n");
     std::vector<type_data_byte> command;
     std::vector<type_data_byte> retResponse;
