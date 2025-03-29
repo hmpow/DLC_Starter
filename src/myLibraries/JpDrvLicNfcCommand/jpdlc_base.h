@@ -1,3 +1,8 @@
+/**
+ * @file jpdlc_base.h
+ * @brief ベースクラスの定義
+ */
+
 #ifndef JP_DRV_LIC_NFC_COMMAND_BASE_H
 #define JP_DRV_LIC_NFC_COMMAND_BASE_H
 
@@ -34,7 +39,7 @@ public:
     /*********************************** 自動I/F ***********************************/
 
     /* 共通 */
-    std::vector<type_data_byte> readBinary_currentFile_specifiedTag(type_tag); //tag指定で読んでlen分進めてってやる関数
+    std::vector<type_data_byte> readBinary_currentFile_specifiedTag(const uint16_t, const type_tag); //tag指定で読んでlen分進めてってやる関数
 
     bool executeVerify_DecimalInput(type_PIN);  //10進入力でPIN認証を実行　あくまでも仕様はJISX0201で照合なのでこちらがオプション
     // PINがJIS X 0201なのはマイナ・従来共通のためbaseクラス側に設置 種別ごと実装を内部で呼ぶ

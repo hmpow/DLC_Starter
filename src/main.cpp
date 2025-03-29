@@ -23,12 +23,14 @@
 #define ENGINE_START_MONITOR_PIN  PORT_A_DEF_ENGINE_START_MONI 
 #define BOOT_MODE_PIN             PORT_A_DEF_BOOT_MODE
 
+/* デバッグ設定 */
 #define SHOW_DEBUG  false
 #define DEVELOP_MODE false
+#define MEASURE_SPEED true
 
 #define EXPIRATION_HOUR_THRESHOLD      12 //有効期限当日の何時を期限切れとするか
 #define REMAINING_COUNT_ALART_THRESHOLD 10 //残り照合回数が下回ったら警告する閾値
-
+#define SKIP_REMAINING_COUNT_CHECK true //残り照合回数チェックをスキップするかどうか
 
 
 const bool USE_ATP301X = true;
@@ -193,6 +195,8 @@ void main_normalMode_loop() {
   //基底クラスは純粋仮想関数を持つためポインタ変数でしか置けない
   JpDrvLicNfcCommandBase *drvLicCard = &jpdlcMyNumberCard; //マイナ免許証優先で判定
   
+
+
   while(!isDriveAllowed){
 
       rcs660sAppIf.resetDevice();
@@ -219,6 +223,10 @@ void main_normalMode_loop() {
 
      /* catchNFCは無限ループに設定しているため捕捉できるまで抜けてこない */
 
+#if MEASURE_SPEED == true
+     unsigned long catchTime = millis();
+#endif
+   
      //カードと通信中はスイッチ割り込み無効
      detachInterrupt(digitalPinToInterrupt(BOOT_MODE_PIN));
      detachInterrupt(digitalPinToInterrupt(ENGINE_START_MONITOR_PIN));
@@ -302,6 +310,7 @@ void main_normalMode_loop() {
           printf("EEPROMにPIN設定あり\r\n");
         }
  
+#if SKIP_REMAINING_COUNT_CHECK == false
         //残り照合回数確認
         uint8_t mynumcount = drvLicCard->getRemainingCount();
         if(SHOW_DEBUG){
@@ -314,7 +323,8 @@ void main_normalMode_loop() {
             announceResetRemainingCount();
           }
         }
-
+#endif
+        //PIN照合
         type_EEPROM_PIN pinDecimal = pinEEPROM.getPin(driverNum - 1);
     
         if(DEVELOP_MODE){
@@ -387,6 +397,12 @@ void main_normalMode_loop() {
     }
 
     if(isEfectiveLicenseCard(expirarionData)){
+
+#if MEASURE_SPEED == true
+      unsigned long completeTime = millis();
+      printf("カードアクセスシーケンス完了：%dms\r\n", completeTime - catchTime);
+#endif
+
         allowDrive();
         
         //ループ終わり
