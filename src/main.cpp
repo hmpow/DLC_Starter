@@ -28,9 +28,9 @@
 #define DEVELOP_MODE false
 #define MEASURE_SPEED true
 
-#define EXPIRATION_HOUR_THRESHOLD      12 //有効期限当日の何時を期限切れとするか
+#define EXPIRATION_HOUR_THRESHOLD       12 //有効期限当日の何時を期限切れとするか
 #define REMAINING_COUNT_ALART_THRESHOLD 10 //残り照合回数が下回ったら警告する閾値
-#define SKIP_REMAINING_COUNT_CHECK true //残り照合回数チェックをスキップするかどうか
+#define SKIP_REMAINING_COUNT_CHECK true   //残り照合回数チェックをスキップするかどうか
 
 
 const bool USE_ATP301X = true;
@@ -536,10 +536,17 @@ void announceExpirationTime(JPDLC_EXPIRATION_DATA exData){
 
 void announcePleaseSavePinOrCheckDriverSelect(){
   if(USE_ATP301X){
-    //音声合成「設定モードから暗証番号するか、登録済みドライバーを選択してください」
-    atp301x.talk("a'nsho-ba'nngo-o/se'teisuru'ka, dora'iba-banngo-o ka'kuninne'kudasai.",true);
+    //音声合成「暗証番号が記憶されていません」
+    atp301x.talk("annsho-ba'nngo-ga/kio_kusareteimase'nn.",true);
+
+    //音声合成「設定モードから暗証番号するか、」
+    atp301x.talk("sette-mo'-dokara/annsho-ba'nngo-o/sette-suru'ka.",true);
+    //音声合成「設定ボタンで事前登録済みドライバーを選択してください」
+    atp301x.talk("sette-bo'tannde/jizennto-rokuzumi/dora'iba-o/sennta_kushitekudasa'i.",true);
     
-    //「現在のドライバー選択はXXです」
+    //音声合成「現在のドライバー選択は　__　です。」
+    sprintf(atpbuf,"ge'nzaino/doraiba-se'nntakuwa <NUMK VAL=%d >de_su.",driverNum);
+    atp301x.talk(atpbuf,true);
   }
   return;
 }
@@ -548,13 +555,17 @@ void announcePleaseSavePinOrCheckDriverSelect(){
 //無限ループアナウンス：暗証番号照合失敗
 void announceCheckPin(){
     if(USE_ATP301X){
-      //音声合成「暗証番号が間違っています。カード保護のため動作を停止しました。暗証番号とドライバー選択を確認してください。」
-      atp301x.talk("a'nsho-ba'nngo-o/go'kakuninne'kudasai.",true);
+      //音声合成「暗証番号またはドライバー選択をご確認ください。」
+      atp301x.talk("annsho-ba'nngo-/mata'wa,doraiba-se'nntakuo/gokakuninnkudasa'i.",true);
+      //音声合成「カード保護のため動作を停止しました。」
+      atp301x.talk("ka-doho'gono+tame' do'-sao/te-_shishima'_shita.",true);
+
       //音声合成「現在のドライバー選択は　__　です。」
+      sprintf(atpbuf,"ge'nzaino/doraiba-se'nntakuwa <NUMK VAL=%d >de_su.",driverNum);
+      atp301x.talk(atpbuf,true);
 
-
-      //音声合成「リセットボタンまたは電源入れ直しで再起動します。」
-
+      //音声合成「リセットボタンを押すか電源を入れ直すと再起動します。」
+      atp301x.talk("risettobo'tanno/osu'ka,dennge'nno/irenao'_suto/saiki'do-shima_su.",true);
     }
   return;
 }
@@ -562,31 +573,20 @@ void announceCheckPin(){
 //無限ループアナウンス：残り照合回数が少ない
 void announceResetRemainingCount(){
   if(USE_ATP301X){
-      //音声合成「残り照合回数が少なくなっています。カード保護のため動作を停止しました。」
-      atp301x.talk("nokorisho-go-ka'isu-ga/sukunakunatteimasu.",true);
-      //音声合成「公式のマイナ免許読み取りアプリで正しい暗証番号で照合し、残り照合回数をリセットしてください。」
-      //音声合成「リセットボタンまたは電源入れ直しで再起動します。」
+
+      //音声合成「残り照合回数が少なくなっています」
+      atp301x.talk("nokorisho-go-ka'isu-ga/_sukunaku/na'tte+ima'_su.",true);
+      //音声合成「カード保護のため動作を停止しました。」
+      atp301x.talk("ka-doho'gono+tame' do'-sao/te-_shishima'_shita.",true);
+      //音声合成「公式のマイナ免許読み取りアプリで正しい暗証番号で照合し、」
+      atp301x.talk("ko-_shikino/mainame'nnkyo/yomito'ria'puride/tadashi'i/annsho-ba'nngo-de/sho-go-_shi.",true);
+      //音声合成「残り照合回数をリセットしてください。」
+      atp301x.talk("nokorisho-go-ka'isu-o/rise'tto/_shitekudasa'i.",true);
+      //音声合成「リセットボタンを押すか電源を入れ直すと再起動します。」
+      atp301x.talk("risettobo'tanno/osu'ka,dennge'nno/irenao'_suto/saiki'do-shima_su.",true);
   }
   return;
 }
-
-
-
-#if 0
-//ATQB応用データを免許証仕様書記載値と照合
-bool checkATQB(uint8_t cardRes[], int len){
-  if(len < 14){
-      return false;
-  }  
-  //ATQB応用データが "00 00 00 00" であるか確認
-  for(int j = 6; j<=9;j++){
-      if(cardRes[j] != 0x00){
-          return false;
-      }
-  }
-  return true;
-}
-#endif
 
 //免許証有効期限チェック
 bool isEfectiveLicenseCard(JPDLC_EXPIRATION_DATA exData){
