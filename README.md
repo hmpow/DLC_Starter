@@ -44,13 +44,13 @@ main.cpp の DEVELOP_MODE を有効にすると、内部に保管だけでなく
 
 ### 使用ライブラリのライセンスについて
 
-DLC starter 自体は MIT ライセンスで公開していますが、ビルドするとLGPLライセンスのライブラリが静的リンクされます。
+DLC starter 自体は MIT ライセンスで公開していますが、ビルドすると LGPL ライセンスのライブラリが静的リンクされます。
 
-このリポジトリでJGPLライセンスのライブラリの "再頒布" はしていません。各々の開発環境で Arduino からダウンロードされ各PC内でリンクされます。
+このリポジトリで LGPL ライセンスのライブラリの "再頒布" はしていませんが、各々の開発環境で Arduino からダウンロードされ各PC内でリンクされます。
 
 https://github.com/arduino/ArduinoCore-renesas/
 
-うち LGPLのライブラリ(DLC starter から include している階層であり、ライブラリ内の芋づる式includeは未確認です)
+うち LGPL のライブラリは下記です。(DLC starter から include している階層であり、ライブラリ内の芋づる式includeは未確認です)
 
 + SPI
 + EEPROM
@@ -115,6 +115,7 @@ WEF01 を読んで暗証番号が設定されていないことを確認し、�
 
 モバイル回線側が接続されていると、~~WAN 側を探しに行ってページが見つからないエラーになるか~~ (上位2バイトをローカルIP割り当て範囲の 192.168 に固定したことで解消？)、検索キーワードとして扱われてIPアドレスに関する検索結果が出てきます。
 
+設定完了後は「設定を終了し再起動」をタップします。
 
 ## ソフトウェア
 
@@ -151,7 +152,11 @@ arduino_secrets_template.h を arduino_secrets.h にリネームして使用し�
 
 #### カードリーダーを変える
 
-JpDrvLicNfcCommand\jpdlc_base_reader_if がラッパー層となっています。
+myLibraries\JpDrvLicNfcCommand\jpdlc_base_reader_if がラッパー層となっていますからカードリーダに合わせて書き換えます。
+
+#### 始動OK の動作を変える
+
+StartCtrl内に、StartCtrlクラスを継承して作成します。
 
 ### ハードウェア
 
