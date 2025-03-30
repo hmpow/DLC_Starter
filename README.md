@@ -173,3 +173,4 @@ NFCカードリーダ : SONY RC-S/660S
 
 **※スタータのB端子回路(バッテリーにつながっている太い線)にリレーを割り込ませると燃えます。C端子回路(プルインコイルにつながっている細い線)かスタータリレーのコイル回路に割り込ませます。**
 
+<img src="https://www.hmcircuit.jp/nfc/img_dlc/dlc_schematic_v2.gif" alt="DLC Starter 回路例" title="DLC Starter 回路例">
