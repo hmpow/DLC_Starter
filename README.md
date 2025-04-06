@@ -117,6 +117,10 @@ WEF01 を読んで暗証番号が設定されていないことを確認し、�
 
 設定完了後は「設定を終了し再起動」をタップします。
 
+## アーキテクチャ概要
+
+<img src="https://www.hmcircuit.jp/nfc/img_dlc/dlc_architecture_overview.gif" alt="DLC Starter DLC Starter アーキテクチャ概要" title="DLC Starter アーキテクチャ概要">
+
 ## ソフトウェア
 
 
@@ -170,7 +174,7 @@ NFCカードリーダ : SONY RC-S/660S
 
 その他 : 電磁リレー、トランジスタ、抵抗など
 
-### 回路例
+#### 回路例
 
 スタータ回路に電磁リレーを割り込ませる、最もスタンダードな構成例です。
 
