@@ -262,6 +262,7 @@ void main_settingMode_loop(void){
     }else if (request.indexOf("GET /endsetting") != -1) { //設定終了ページ
       executeReset = true;
       showWebPage(client, HTML_ENDSETTING);  // 設定終了ページを表示
+      delay(500); //中断防止
     }else {
       showWebPage(client, HTML_HOME);  // ホームページを表示
     }
@@ -292,11 +293,17 @@ void main_settingMode_loop(void){
 
 // HTMLページを送信する関数
 void showWebPage(WiFiClient client, String page) {
+    
+    // CSSを置き換え
+    String outPage = page;
+    String css = CSS_SETTING_PAGE;
+    outPage.replace("%CSS%", css);
+
     client.println("HTTP/1.1 200 OK");
     client.println("Content-Type: text/html");
     client.println("Connection: close");
     client.println();
-    client.println(page);
+    client.println(outPage);
 }
   
 void printWiFiStatus() {
