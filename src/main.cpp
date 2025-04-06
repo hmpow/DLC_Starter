@@ -327,7 +327,7 @@ void main_normalMode_loop() {
         //PIN照合
         type_EEPROM_PIN pinDecimal = pinEEPROM.getPin(driverNum - 1);
     
-        if(DEVELOP_MODE){
+        #if DEVELOP_MODE
           sprintf(atpbuf,"pinnwa <NUMK VAL=%d > <NUMK VAL=%d > <NUMK VAL=%d > <NUMK VAL=%d >.",
             pinDecimal[0],pinDecimal[1],pinDecimal[2],pinDecimal[3]);
           atp301x.talk(atpbuf,true);
@@ -343,15 +343,15 @@ void main_normalMode_loop() {
             atp301x.talk(atpbuf,false);
             delay(1000);
           }
-        }
+        #endif
     
         bool isVerified = drvLicCard->executeVerify_DecimalInput(pinDecimal);
     
         if(isVerified){
-          if(DEVELOP_MODE){
+          #if DEVELOP_MODE
             atp301x.talk("berifa'i se-ko-.");
             printf("PIN照合成功\r\n");
-          }
+          #endif
         }else{
           rcs660sAppIf.releaseNfc();
           
@@ -368,14 +368,15 @@ void main_normalMode_loop() {
         }
 
         type_PIN pinDpin = {DPIN,DPIN,DPIN,DPIN};
-        if(DEVELOP_MODE){
+        
+        #if DEVELOP_MODE
           for(int i = 5; i >= 0; i--){
             printf("PIN照合待機：%d秒\r\n",i);
             sprintf(atpbuf,"<NUMK VAL=%d >.",i);
             atp301x.talk(atpbuf,false);
             delay(1000);
           }
-        }
+        #endif
 
         bool isVerified = drvLicCard->executeVerify(pinDpin);
       }
