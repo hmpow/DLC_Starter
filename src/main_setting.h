@@ -14,6 +14,7 @@
 #include "main_setting_html.h"
 #include "ATP301x_Arduino_SPI.h"
 
+#include "dlcRTC.h"
 #include "pinEEPROM.h"
 
 #include "port_assign_define.h"
@@ -21,9 +22,6 @@
 
 /* 通常モードと共用のプロトタイプ宣言や数 */
 /* extern 付き宣言してメイン側に置いたものをリンクしてもらう */
-
-extern void printRTCtime(void);
-extern void setupRTC(void);
 
 extern ATP301x_ARDUINO_SPI atp301x;
 extern PinEEPROM pinEEPROM;

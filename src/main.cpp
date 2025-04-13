@@ -5,14 +5,13 @@
 //設定画面で不正値を渡された際に、toIntが文字とかゼロにしてくれるので判定が楽
 
 #include <Arduino.h>
-#include <RTC.h>
-#include <EEPROM.h>
 
 #include "main_setting.h"
 
 #include "StartCtrl.h"
 #include "rcs660s_app_if.h"
 #include "ATP301x_Arduino_SPI.h"
+#include "dlcRtc.h"
 
 #include "jpdlc_conventional.h"
 #include "jpdlc_mynumbercard.h"
@@ -24,9 +23,9 @@
 #define BOOT_MODE_PIN             PORT_A_DEF_BOOT_MODE
 
 /* デバッグ設定 */
-#define SHOW_DEBUG  false
-#define DEVELOP_MODE false
-#define MEASURE_SPEED true
+#define SHOW_DEBUG    false
+#define DEVELOP_MODE  false
+#define MEASURE_SPEED false
 
 #define EXPIRATION_HOUR_THRESHOLD       12 //有効期限当日の何時を期限切れとするか
 #define REMAINING_COUNT_ALART_THRESHOLD 10 //残り照合回数が下回ったら警告する閾値
@@ -62,13 +61,6 @@ void announcePleaseSavePinOrCheckDriverSelect();
 
 void announceCheckPin();
 void announceResetRemainingCount();
-
-bool isEfectiveLicenseCard(JPDLC_EXPIRATION_DATA);
-
-void printRTCtime(void);
-void setupRTC(void);
-
-
 
 void main_normalMode_setup(void);
 void main_normalMode_loop(void);
@@ -397,7 +389,7 @@ void main_normalMode_loop() {
       continue;
     }
 
-    if(isEfectiveLicenseCard(expirarionData)){
+    if(isEfectiveLicenseCard(expirarionData, EXPIRATION_HOUR_THRESHOLD)){
 
 #if MEASURE_SPEED == true
       unsigned long completeTime = millis();
@@ -589,80 +581,6 @@ void announceResetRemainingCount(){
   return;
 }
 
-//免許証有効期限チェック
-bool isEfectiveLicenseCard(JPDLC_EXPIRATION_DATA exData){
-
-  //エラーチェック 0年 をエラーコードと扱う
-  if(exData.yyyy == 0){
-    return false;
-  }
-
-  RTCTime expirationTime;
-  expirationTime.setYear(exData.yyyy);
-  expirationTime.setMonthOfYear((Month)(exData.m - 1));//0始まりのenumになっているので1引くこと
-  expirationTime.setDayOfMonth(exData.d);
-  expirationTime.setHour(EXPIRATION_HOUR_THRESHOLD);
-  expirationTime.setMinute(0);
-  expirationTime.setSecond(0);
-
-  RTCTime currentTime;
-  RTC.getTime(currentTime);
-
-
-  //unix秒に変換
-  uint64_t currentUnixTime    = (uint64_t)currentTime.getUnixTime();
-  uint64_t expirationUnixTime = (uint64_t)expirationTime.getUnixTime();
-
-  if(SHOW_DEBUG){
-    Serial.println("CURRENT Time: ");
-    // Print out UNIX time
-    Serial.print("UNIX time: ");
-    Serial.println(currentUnixTime);
-    Serial.print("YYYY/MM/DD - HH/MM/SS:");
-    Serial.print(currentTime.getYear());
-    Serial.print("/");
-    Serial.print(Month2int(currentTime.getMonth()));
-    Serial.print("/");
-    Serial.print(currentTime.getDayOfMonth());
-    Serial.print(" - ");
-    Serial.print(currentTime.getHour());
-    Serial.print(":");
-    Serial.print(currentTime.getMinutes());
-    Serial.print(":");
-    Serial.println(currentTime.getSeconds());
-
-    Serial.println("EXPIRATION Time: ");
-    // Print out UNIX time
-    Serial.print("UNIX time: ");
-    Serial.println(expirationUnixTime);
-    Serial.print("YYYY/MM/DD - HH/MM/SS:");
-    Serial.print(expirationTime.getYear());
-    Serial.print("/");
-    Serial.print(Month2int(expirationTime.getMonth()));
-    Serial.print("/");
-    Serial.print(expirationTime.getDayOfMonth());
-    Serial.print(" - ");
-    Serial.print(expirationTime.getHour());
-    Serial.print(":");
-    Serial.print(expirationTime.getMinutes());
-    Serial.print(":");
-    Serial.println(expirationTime.getSeconds());
-  }
-  
-  if(currentUnixTime < expirationUnixTime){
-      if(SHOW_DEBUG){
-          Serial.println("You can drive!");
-      }
-      return true;
-  }else{
-      if(SHOW_DEBUG){
-          Serial.println("You cannot drive!");
-      }
-      return false;
-  }
-}
-
-
 void intrruptFunc_ChangeDriver(){
   //DJごっこして遊んでいるとUARTがしばらくフリーズする
   unsigned long lastlast = lastIntruuptTime;
@@ -686,7 +604,6 @@ void intrruptFunc_ChangeDriver(){
   sprintf(atpbuf,"mainame'nnkyo dora'iba-<ALPHA VAL=%d>.",driverNum);
   atp301x.talk(atpbuf,false);
   return;
- 
 }
 
 void intrruptFunc_EgStartMoni(){
@@ -699,62 +616,4 @@ void intrruptFunc_EgStartMoni(){
     announcePleaseTouch();
   }
   return;
- 
 }
-
-
-
-void printRTCtime(void){
-  RTCTime currentTime;
-  bool running = RTC.isRunning();
-
-  if (running) {
-    Serial.println("RTC is running!");
-  }else{
-    Serial.println("RTC is not running!");
-  }
-
-  // Get current time from RTC
-  RTC.getTime(currentTime);
-
-  // Print out UNIX time
-  Serial.print("UNIX time: ");
-  Serial.println(currentTime.getUnixTime());
-
-
-  Serial.print("YYYY/MM/DD - HH/MM/SS:");
-  Serial.print(currentTime.getYear());
-  Serial.print("/");
-  Serial.print(Month2int(currentTime.getMonth()));
-  Serial.print("/");
-  Serial.print(currentTime.getDayOfMonth());
-  Serial.print(" - ");
-  Serial.print(currentTime.getHour());
-  Serial.print(":");
-  Serial.print(currentTime.getMinutes());
-  Serial.print(":");
-  Serial.println(currentTime.getSeconds());
-}
-
-
-void setupRTC(void){
-  //何故かRTCの開始と時刻設定が一体化しているAPI仕様のため
-  //一旦取得して時刻設定という動きをしないと枚リセットごとに時計が初期化されてしまう
-
-  RTC.begin(); // RTCの初期化　これだけではRTC動き始めない
-  printRTCtime(); //表示
-
-  RTCTime rtcTime;
-  RTC.getTime(rtcTime);// RTCから現在時刻を取得
-
-  //もし2000年(リセット)されていたら、必ず有効期限切れになるように未来を設定
-  //2000年のままだと有効期限が全部OKになってしまうため
-  if(rtcTime.getYear() == 2000){
-    rtcTime.setYear(2090);
-  }
-
-  RTC.setTimeIfNotRunning(rtcTime); // 現在時刻を引き継いでRTCをスタート
-
-  printRTCtime(); //表示
-}
-
