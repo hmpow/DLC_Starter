@@ -34,8 +34,6 @@ void main_settingMode_setup(void){
       }
     }  
 
-    matrix.loadFrame(matrix_WiFi);
-
 #ifdef SECRET_IP_ADDR_UPPER
 #ifdef SECRET_IP_ADDR_LOWER
     //IPアドレスの設定
@@ -65,6 +63,8 @@ void main_settingMode_setup(void){
     Serial.println("Webサーバー開始");
 
     delay(1000);
+    
+    matrix.loadFrame(matrix_WiFi);
     printWiFiStatus();
     return;
 }

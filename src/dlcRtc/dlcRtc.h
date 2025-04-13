@@ -5,7 +5,7 @@
 #include <RTC.h>
 #include "jpdlc_typedef.h"
 
-#define DLC_RTC_DEBUG
+//#define DLC_RTC_DEBUG
 
 void setupRTC(void);
 bool isEfectiveLicenseCard(JPDLC_EXPIRATION_DATA,uint8_t);
