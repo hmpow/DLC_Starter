@@ -6,115 +6,137 @@
 //CSS
 const char CSS_SETTING_PAGE[] PROGMEM = R"rawliteral(
   :root {
-    --sub-color: #002060;
+    --sub-color: #000066;
+    --hover-color: #0000ff
   }
   
   body{
-    width:100%;
+    width: 100%;
     max-width: 480px;
-    margin:auto;
+    margin: auto;
   }
   
   .header_base{
-    width:100%;
-    height:48px;
+    width: 100%;
+    height: 48px;
     max-width: 480px;
-    background-color:var(--sub-color);
-    text-align:left;
-    position:fixed;
-    z-index:1;
-    padding : 0;
+    background-color: var(--sub-color);
+    text-align: left;
+    position: fixed;
+    z-index: 1;
+    padding: 0;
     vertical-align: middle;
-	  display: flex;
-	  flex-direction: row;
+    display: flex;
+    flex-direction: row;
   }
   
   .triangle_base{
-    width:48px;
-    height:48px;
-    padding : 0;
-	  float:right;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    float: right;
   }
   
   .triangle {
-    width:48px;
-    height:48px;
+    width: 48px;
+    height: 48px;
     clip-path: polygon(8px 24px, 40px 8px, 40px 40px);
-    text-align:center;
-    padding-left:6px;
-    line-height:48px;
-    background-color:#fff;
-    font-size:16px;
+    text-align: center;
+    padding-left: 6px;
+    line-height: 48px;
+    background-color: #ffffff;
+    font-size: 16px;
   }
   
   .header_title{
-    #background-color:#ddd;
-    height:100%;
-    line-height:48px;
-    color:#fff;
-    font-weight:bold;
-    font-size:24px;
-    padding-left:8px;
+    height: 100%;
+    padding-left: 8px;
+    line-height: 48px;
+    color: #ffffff;
+    font-weight: bold;
+    font-size: 24px;
   }
   
   main
   {
-    position:relative;
-    top:48px;
-    width:100%;
-    float:top;
-    z-index:0;
-    overflow:auto;
+    position: relative;
+    top: 48px;
+    width: 100%;
+    z-index: 0;
+    overflow: auto;
+    margin: auto 2%;
+    width:96%;
   }
   
+  input[type="date"],
+  input[type="time"] {
+    text-align: center;
+    text-align-last: center;
+    padding-left: 0;
+    padding-right: 0;
+  }
+  
+  .input_parts{
+    box-sizing: border-box;
+    margin-left: 0.1em;
+    background-color: #ffffff;
+    font-size: 1.2em;
+    width: 9em;
+    height: 1.8em;
+    border-radius: 8px;
+    border: 1.5px solid var(--sub-color);
+    text-align: center;
+  }
+    
   .submit_button{
-    line-height:48px;
-    height:48px;
+    box-sizing: border-box;
+    line-height: 48px;
+    height: 48px;
     font-size: 1.5em;
-    width:94%;
-    margin:3%;
+    width: 98%;
+    margin: 8px 1%;
     border-radius: 24px;
-    background-color:var(--sub-color);
-    color:#fff;
-	text-align:center;
+    background-color: var(--sub-color);
+    color: #ffffff;
+    text-align: center;
   }
   
   .submit_button:hover {
-    box-shadow: 0px 0px 8px red;
+    box-shadow: 0px 0px 4px var(--hover-color);
   }
   
   .menu_button{
-    line-height:44px;
-    height:44px;
+    box-sizing: border-box;
+    line-height: 48px;
+    height: 48px;
     font-size: 1.5em;
-    width:94%;
-    margin:3%;
+    width: 98%;
+    margin: 16px 1%;
     border-radius: 24px;
-    background-color:#fff;
-    color:var(--sub-color);
-	border-width:2px;
-	border-style:solid;
-	border-color:var(--sub-color);
-	text-align:center;
+    background-color: #ffffff;
+    color: var(--sub-color);
+    border: 2px solid var(--sub-color);
+    text-align:center;
   }
   
   .menu_button:hover {
-    box-shadow: 0px 0px 8px red;
+    box-shadow: 0px 0px 4px var(--hover-color);
   }
   
   h3{
     color:var(--sub-color);
+    font-size: 1.2em;
   }
   
   em{
-	  color:var(--sub-color);
-	  font-weight:bold;
-	  font-style:normal;
-    font-size:1.5em;
+    color: var(--sub-color);
+    font-weight: bold;
+    font-style: normal;
+    font-size: 1.2em;
   }
   
   a{
-	  text-decoration:none;
+    text-decoration: none;
   }
 )rawliteral";
 
@@ -228,17 +250,17 @@ const char HTML_PIN_SETTING[] PROGMEM = R"rawliteral(
         
         <h3>設定対象ドライバー</h3>
   
-        <select name="driver" style = 'font-size: 1.2em;'>
+        <select name="driver" class = "input_parts">
           <option value = '1'>ドライバー 1</option>
           <option value = '2'>ドライバー 2</option>
           <option value = '3'>ドライバー 3</option>
         </select>
     
         <h3>マイナ免許証暗証番号</h3>
-        <input type='number' name='dlcpin' min='0' max='9999' style = 'font-size: 1.5em;'><br>
+        <input type='number' name='dlcpin' min='0' max='9999' class = 'input_parts'><br>
         ※空白のまま送信すると削除できます。
         <h3>いたずら防止用暗証番号</h3>
-        <input type='number' name='secno' min='0' max='9999' style = 'font-size: 1.5em;'><br>
+        <input type='number' name='secno' min='0' max='9999' class = 'input_parts'><br>
         ※arduino_secrets.h に設定した "SECURITY_NO" です。
         <br>
         <input type='submit' value='設定' class='submit_button'>
@@ -277,26 +299,27 @@ const char HTML_CALENDAR[] PROGMEM = R"rawliteral(
         </div>
     </header>
 
-    <main>
-      <p>本体内部のカレンダーを設定します。</p>
-    
-      <div style= 'text-align: center;'>
-        <em>%RTC_Y% / %RTC_M% / %RTC_D%<br>
-        ↓ ↓ ↓</em>
-	    <form action='/calendar' method='get'>
-        <input type='date' name='date' min='2025-01-01' max='2090-12-31' style = 'font-size: 1.5em; text-align: center;'>
-      </div>
-        <br>
-        スマホの日付がデフォルト入力されています。<br>
-        未来の日付に設定すると動作テストができます。<br>
-        <br>
-        <input type='time' name='time' readonly tabIndex = '-1' style = 'background-color: gainsboro; cursor:not-allowed;'>
-	      <br>
-        ※時刻はスマホの時計から自動取得されます。<br>
 
-        <input type='submit' value='設定' class='submit_button'>
-      </form>
-    </main>
+  <main>
+    <p>本体内部のカレンダーを設定します。</p>
+  
+    <div style= 'text-align: center;'>
+      <em>%RTC_Y% / %RTC_M% / %RTC_D%<br>
+      ↓ ↓ ↓</em>
+    <form action='/calendar' method='get'>
+      <input type='date' name='date' min='2025-01-01' max='2090-12-31' class = 'input_parts'>
+    </div>
+      <br>
+      スマホの日付がデフォルト入力されています。<br>
+      未来の日付に設定すると動作テストができます。<br>
+      <br>
+      <input type='time' name='time' readonly tabIndex = '-1' style = 'background-color: #ccc; cursor:not-allowed; box-sizing: content-box; width: 8em; border:solid 1px #666; border-radius: 4px;'>
+      <br>
+      ※時刻はスマホの時計から自動取得されます。<br>
+
+      <input type='submit' value='設定' class='submit_button'>
+    </form>
+  </main>
   </body>
 
   <script defer>
