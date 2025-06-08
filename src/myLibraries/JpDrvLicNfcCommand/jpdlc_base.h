@@ -12,9 +12,6 @@
 #include "jpdlc_typedef.h"
 #include "jpdlc_base_reader_if.h"
 
-#define SHOW_DEBUG 1
-
-
 /*******************/
 /* 従来・マイナ共通 */
 /*******************/
@@ -30,11 +27,6 @@ class JpDrvLicNfcCommandBase
 public:
     JpDrvLicNfcCommandBase();
     virtual ~JpDrvLicNfcCommandBase();
-
-
-    Rcs660sAppIf rcs660sInstance;
-    void setReader(const Rcs660sAppIf);
-
 
     /*********************************** 自動I/F ***********************************/
 
